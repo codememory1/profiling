@@ -1,0 +1,33 @@
+{
+    "name": "codememory/profiling",
+    "description": "profiling",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Danil",
+            "email": "kostynd1@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "ext-xhprof": "*",
+        "codememory/caching": "^1.1",
+        "codememory/config": "^1.1",
+        "codememory/date-time": "^1.0",
+        "codememory/fs": "^1.1",
+        "codememory/global-config": "^1.1",
+        "codememory/markup": "^2.0",
+        "codememory/support": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Codememory\\Components\\Profiling\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^5.3"
+    }
+}
