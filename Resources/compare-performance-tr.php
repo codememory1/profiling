@@ -8,7 +8,7 @@
             <?php if (null !== $data['ct']['added']): ?>
                 <span class="green-text">+<?php echo $data['ct']['added']; ?></span>
             <?php elseif (null !== $data['ct']['removed']): ?>
-                <span class="red-text">+<?php echo $data['ct']['removed']; ?></span>
+                <span class="red-text"><?php echo $data['ct']['removed']; ?></span>
             <?php endif; ?>
         </td>
         <td>

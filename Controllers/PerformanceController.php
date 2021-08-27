@@ -110,7 +110,7 @@ class PerformanceController extends AbstractProfilerController
             }
         }
 
-        $compareReport = $xhprofWorker->compare($xhprofReport, ...$reportsForCompare)['report'];
+        $compareReport = $xhprofWorker->compare($xhprofReport, ...$reportsForCompare);
         $present = function (){};
 
         if(count($reportHashes) > 1) {
@@ -129,10 +129,10 @@ class PerformanceController extends AbstractProfilerController
             'urlBuilder'                => function (array $parameters, ?string $url = null) use ($request) {
                 return $this->addParametersToUrl($request, $parameters, $url);
             },
-            'compare-report'            => $xhprofWorker->sortByKey($compareReport, 'wt.was'),
-            'compare-report-added'      => $xhprofWorker->compare($xhprofReport, ...$reportsForCompare)['added'],
-            'compare-report-removed'    => $xhprofWorker->compare($xhprofReport, ...$reportsForCompare)['removed'],
-            'overall-comparison-result' => $xhprofWorker->overallComparisonResult($compareReport),
+            'compare-report'            => $xhprofWorker->sortByKey($compareReport['report'], 'wt.was'),
+            'compare-report-added'      => $compareReport['added'],
+            'compare-report-removed'    => $compareReport['removed'],
+            'overall-comparison-result' => $xhprofWorker->overallComparisonResult($compareReport['report']),
             'get-present'               => $present,
             'report-render'             => function (string $added, string $removed, ?int $present): string {
                 return $this->renderReport($added, $removed, $present);
@@ -186,10 +186,12 @@ class PerformanceController extends AbstractProfilerController
         $two = abs((float) $two);
 
         if ($one > $two) {
-            return ($one - $two) / $one * 100;
+            return ($one - $two) / (0 === $one ? 1 : $one) * 100;
+        } else if($two > $one) {
+            return ($two - $one) / (0 === $two ? 1 : $two) * 100;
         }
 
-        return ($two - $one) / $two * 100;
+        return 0;
 
     }
 

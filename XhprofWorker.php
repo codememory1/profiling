@@ -94,13 +94,15 @@ class XhprofWorker
     public function getFunctionsWithData(array $names, array $report): array
     {
 
+
         $namesWithData = [];
 
-        foreach ($this->iteration($names) as $name) {
-            foreach ($this->iteration($report) as $functionNames => $data) {
-                if (Str::ends($functionNames, $name)) {
-                    $namesWithData[$name] = $data;
-                }
+        foreach ($this->iteration($report) as $functionNames => $data) {
+            $functions = explode('==>', $functionNames);
+            $lastFunctionName = $functions[array_key_last($functions)];
+
+            if (in_array($lastFunctionName, $names)) {
+                $namesWithData[$lastFunctionName] = $data;
             }
         }
 
@@ -163,10 +165,10 @@ class XhprofWorker
         foreach ($functions as $functionName => &$data) {
             $children = $this->getChildren($functionName, $reports);
 
-            $data['wt'] = $this->combineValuesByKey($children, 'wt');
-            $data['cpu'] = $this->combineValuesByKey($children, 'cpu');
-            $data['mu'] = $this->combineValuesByKey($children, 'mu');
-            $data['pmu'] = $this->combineValuesByKey($children, 'pmu');
+            $data['wt'] += $this->combineValuesByKey($children, 'wt');
+            $data['cpu'] += $this->combineValuesByKey($children, 'cpu');
+            $data['mu'] += $this->combineValuesByKey($children, 'mu');
+            $data['pmu'] += $this->combineValuesByKey($children, 'pmu');
         }
 
         return $functions;
@@ -200,11 +202,11 @@ class XhprofWorker
                 }
             }
 
-            $ct = $this->deductFromReportsByKey($functionName, 'ct', ...$reports);
-            $wt = $this->deductFromReportsByKey($functionName, 'wt', ...$reports);
-            $cpu = $this->deductFromReportsByKey($functionName, 'cpu', ...$reports);
-            $mu = $this->deductFromReportsByKey($functionName, 'mu', ...$reports);
-            $pmu = $this->deductFromReportsByKey($functionName, 'pmu', ...$reports);
+            $ct = $this->deductFromReportsByKey($functionName, 'ct', $data, ...$reports);
+            $wt = $this->deductFromReportsByKey($functionName, 'wt', $data, ...$reports);
+            $cpu = $this->deductFromReportsByKey($functionName, 'cpu', $data, ...$reports);
+            $mu = $this->deductFromReportsByKey($functionName, 'mu', $data, ...$reports);
+            $pmu = $this->deductFromReportsByKey($functionName, 'pmu', $data, ...$reports);
 
             $result['report'][$functionName] = [
                 'ct'  => [
@@ -366,22 +368,24 @@ class XhprofWorker
      *
      * @return int|null
      */
-    private function deductFromReportsByKey(string $functionName, string $key, array ...$reports): ?int
+    private function deductFromReportsByKey(string $functionName, string $key, array $functionData, array ...$reports): ?int
     {
 
         $result = null;
 
-        foreach ($reports as $report) {
+        foreach ($this->iteration($reports) as $report) {
             if (array_key_exists($functionName, $report)) {
-                if (null === $result) {
+                if(null === $result) {
                     $result = $report[$functionName][$key];
                 } else {
-                    $result = $result - $report[$functionName][$key];
+                    $result += $report[$functionName][$key];
                 }
             }
+
+            break;
         }
 
-        return $result;
+        return null !== $result ? $result - $functionData[$key] : null;
 
     }
 
@@ -398,6 +402,5 @@ class XhprofWorker
         }
 
     }
-
 
 }
