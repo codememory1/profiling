@@ -104,7 +104,9 @@ class PerformanceController extends AbstractProfilerController
 
         foreach ($reportHashes as $index => $reportHash) {
             if ($index !== 0) {
-                $reportsForCompare[] = $xhprofWorker->getReportByHash($reportHash)['report'];
+                $report = $xhprofWorker->getReportByHash($reportHash)['report'];
+
+                $reportsForCompare[] = $xhprofWorker->getFunctionsWithData($xhprofWorker->getUniqueFunctions($report), $report);
             }
         }
 
