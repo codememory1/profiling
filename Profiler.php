@@ -2,15 +2,16 @@
 
 namespace Codememory\Components\Profiling;
 
-use Codememory\Components\Caching\Cache;
-use Codememory\Components\Caching\Interfaces\CacheInterface;
-use Codememory\Components\Markup\Types\YamlType;
-use Codememory\Components\Profiling\Interfaces\ProfilerInterface;
-use Codememory\FileSystem\File;
-use Codememory\FileSystem\Interfaces\FileInterface;
-use Codememory\Support\Str;
-use Generator;
-use JetBrains\PhpStorm\ArrayShape;
+use Codememory\Components\Profiling\Interfaces\SectionInterface;
+use Codememory\Components\Profiling\Sections\EventSection;
+use Codememory\Components\Profiling\Sections\HomeSection;
+use Codememory\Components\Profiling\Sections\LoggingSection;
+use Codememory\Components\Profiling\Sections\PerformanceSection;
+use Codememory\Components\Profiling\Sections\Subsections\ComparePerformanceReports;
+use Codememory\Components\Profiling\Sections\Subsections\ListPerformanceReports;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportsResult;
+use Codememory\Routing\Router;
+use ReflectionClass;
 
 /**
  * Class Profiler
@@ -19,351 +20,133 @@ use JetBrains\PhpStorm\ArrayShape;
  *
  * @author  Codememory
  */
-class Profiler implements ProfilerInterface
+class Profiler
 {
 
-    private const TYPE_CACHE = '__cdm-profiling';
-    private const NAME_CACHE = 'reports';
+    /**
+     * @var Utils
+     */
+    private static Utils $utils;
 
     /**
-     * @var CacheInterface
+     * @return void
      */
-    private CacheInterface $cache;
-
-    /**
-     * @var array
-     */
-    private array $profilingData = [];
-
-    /**
-     * Profiler Construct
-     */
-    public function __construct()
+    public static function enable(): void
     {
 
-        $this->cache = new Cache(new YamlType(), new File());
+        self::$utils = new Utils();
 
     }
 
     /**
-     * @inheritDoc
+     * @return void
      */
-    public function enable(array $options = []): void
+    public static function enablePerformance(): void
     {
 
-        xhprof_enable(XHPROF_FLAGS_CPU | XHPROF_FLAGS_MEMORY, $options);
-
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function profile(): void
-    {
-
-        $this->profilingData = xhprof_disable();
-
-        $this->save($this->profilingData);
-
-    }
-
-    /**
-     * @return array
-     */
-    public function getProfiledData(): array
-    {
-
-        return $this->profilingData;
-
-    }
-
-    /**
-     * @param string $str
-     *
-     * @return array
-     */
-    public function stringToUnicode(string $str): array
-    {
-
-        $codes = [];
-        $strLength = mb_strlen($str, 'utf8');
-
-        for ($i = 0; $i < $strLength; $i++) {
-            $codes[] = ord($str[$i]);
+        if (isDev() || self::$utils->getEnabledInProd()) {
+            xhprof_enable(XHPROF_FLAGS_CPU | XHPROF_FLAGS_MEMORY);
         }
 
-        return $codes;
+    }
+
+    /**
+     * @return array
+     */
+    public static function getPerformanceReport(): array
+    {
+
+        if (isDev() || self::$utils->getEnabledInProd()) {
+            return xhprof_disable();
+        }
+
+        return [];
 
     }
 
     /**
-     * @param array $codes
+     * @return void
+     * @throws Exceptions\SectionExistException
+     * @throws Exceptions\SectionNotExistException
+     */
+    public static function initialization(): void
+    {
+
+        self::initReservedSections();
+        self::initRoutes();
+
+    }
+
+    /**
+     * @param SectionInterface $section
      *
      * @return string
      */
-    public function unicodeCodesToString(array $codes): string
+    public static function generateRouteName(SectionInterface $section): string
     {
 
-        $str = null;
+        $reflector = new ReflectionClass($section);
 
-        foreach ($codes as $code) {
-            $str .= chr($code);
-        }
-
-        return $str;
+        return sprintf('__profiler-%s', $reflector->getShortName());
 
     }
 
     /**
-     * @param array $components
-     *
-     * @return array
+     * @return void
+     * @throws Exceptions\SectionExistException
+     * @throws Exceptions\SectionNotExistException
      */
-    public function getUniqueComponentNames(array $components): array
+    private static function initReservedSections(): void
     {
 
-        $uniqueComponentNames = [];
+        $performanceSection = new PerformanceSection();
 
-        foreach ($this->iterationData($components) as $componentNamesString => $value) {
-            $componentNames = explode('==>', $componentNamesString);
+        ProfilerSection::addSection(new HomeSection());
+        ProfilerSection::addSection($performanceSection);
+        ProfilerSection::addSection(new LoggingSection());
+        ProfilerSection::addSection(new EventSection());
 
-            foreach ($componentNames as $componentName) {
-                if (!in_array($componentName, $uniqueComponentNames)) {
-                    $uniqueComponentNames[] = $componentName;
-                }
-            }
-        }
-
-        return $uniqueComponentNames;
-
-    }
-
-    /**
-     * @param array       $report
-     * @param string|null $sortByKeyData
-     *
-     * @return array
-     */
-    public function getUniqueComponentNamesWithData(array $report, ?string $sortByKeyData = null): array
-    {
-
-        $uniqueComponentNamesWithData = [];
-
-        foreach ($this->getUniqueComponentNames($report) as $uniqueComponentName) {
-            foreach ($this->iterationData($report) as $componentNamesString => $value) {
-                if (Str::ends($componentNamesString, $uniqueComponentName)) {
-                    $uniqueComponentNamesWithData[$uniqueComponentName] = $value;
-                }
-            }
-        }
-
-        if (null !== $sortByKeyData) {
-            uasort($uniqueComponentNamesWithData, function (array $data1, array $data2) use ($sortByKeyData) {
-                return $data1[$sortByKeyData] < $data2[$sortByKeyData];
-            });
-        }
-
-        return $uniqueComponentNamesWithData;
-
-    }
-
-    /**
-     * @param string $componentName
-     * @param array  $components
-     *
-     * @return array
-     */
-    public function getComponentsByName(string $componentName, array $components): array
-    {
-
-        $uniqueComponentNamesWithData = [];
-
-        foreach ($this->iterationData($components) as $componentNamesString => $value) {
-            if (Str::starts($componentNamesString, sprintf('%s==>', $componentName))) {
-                preg_match('/(?<current>.*)==>(?<next>.*)/', $componentNamesString, $match);
-
-                $uniqueComponentNamesWithData[$match['next']] = $value;
-            }
-        }
-
-        return $uniqueComponentNamesWithData;
-
-    }
-
-    /**
-     * @return array
-     */
-    public function getReports(): array
-    {
-
-        return $this->cache->get(self::TYPE_CACHE, self::NAME_CACHE, function (FileInterface $filesystem, string $fullPath) {
-            $fullPath = $fullPath . '.fc';
-
-            if ($filesystem->exist($fullPath)) {
-                return unserialize(file_get_contents($filesystem->getRealPath($fullPath)));
-            }
-
-            return [];
-        }) ?: [];
-
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return array
-     */
-    public function getReport(string $name): array
-    {
-
-        return $this->getReports()[$name] ?? [];
+        ProfilerSection::addSubSection($performanceSection->getSectionName(), new ListPerformanceReports());
+        ProfilerSection::addSubSection($performanceSection->getSectionName(), new ComparePerformanceReports());
 
     }
 
     /**
      * @return void
      */
-    public function clear(): void
+    private static function initRoutes(): void
     {
 
-        $this->cache->remove(self::TYPE_CACHE, self::NAME_CACHE);
-
-    }
-
-    /**
-     * @param array       $main
-     * @param array       $comparable
-     * @param string|null $sortByKey
-     *
-     * @return array
-     */
-    public function diffReports(array $main, array $comparable, ?string $sortByKey = null): array
-    {
-
-        $result = [];
-
-        foreach ($main as $componentName => $data) {
-            if (array_key_exists($componentName, $main)) {
-                $componentDataOfComparable = $comparable[$componentName];
-                $ctResult = $componentDataOfComparable['ct'] - $data['ct'];
-                $mtResult = $componentDataOfComparable['wt'] - $data['wt'];
-                $cpuResult = $componentDataOfComparable['cpu'] - $data['cpu'];
-                $muResult = $componentDataOfComparable['mu'] - $data['mu'];
-                $pmuResult = $componentDataOfComparable['pmu'] - $data['pmu'];
-
-                $result[$componentName] = [
-                    'ct'  => [
-                        'was'     => $data['ct'],
-                        'changed' => $ctResult
-                    ],
-                    'wt'  => [
-                        'was'     => $data['wt'],
-                        'changed' => $mtResult
-                    ],
-                    'cpu' => [
-                        'was'     => $data['cpu'],
-                        'changed' => $cpuResult
-                    ],
-                    'mu'  => [
-                        'was'     => $data['mu'],
-                        'changed' => $muResult
-                    ],
-                    'pmu' => [
-                        'was'     => $data['pmu'],
-                        'changed' => $pmuResult
-                    ]
-                ];
-            }
-        }
-
-        if (null !== $sortByKey) {
-            uasort($result, function (array $data1, array $data2) use ($sortByKey) {
-                return $data1[$sortByKey]['was'] < $data2[$sortByKey]['was'];
-            });
-        }
-
-        return $result;
-
-    }
-
-    /**
-     * @param array $diffReport
-     *
-     * @return array
-     */
-    #[ArrayShape(['added' => "array", 'removed' => "array"])]
-    public function getDiffCommonNumbers(array $diffReport): array
-    {
-
-        $numbers = [
-            'added'   => [],
-            'removed' => []
-        ];
-
-        foreach ($diffReport as $data) {
-            foreach ($data as $key => $value) {
-                if($value['changed'] < 0) {
-                    if(!array_key_exists($key, $numbers['removed'])) {
-                        $numbers['removed'][$key] = 0;
-                    }
-
-                    $numbers['removed'][$key] += $value['changed'];
-                } else {
-                    if(!array_key_exists($key, $numbers['added'])) {
-                        $numbers['added'][$key] = 0;
-                    }
-
-                    $numbers['added'][$key] += $value['changed'];
+        if (isDev() || self::$utils->getEnabledInProd()) {
+            Router::subdomainGroup(self::$utils->getSubdomain(), function () {
+                foreach (ProfilerSection::getSections() as $sectionData) {
+                    self::routeCreation($sectionData);
                 }
-            }
-        }
+            });
 
-        return $numbers;
+            self::routeCreation(['section' => new PerformanceReportsResult()]);
+
+            Router::get('/remove-profiled-pages', 'Codememory\Components\Profiling\Controllers\HomeController#removeAll')->name('__profiler-remove-all-statistics');
+        }
 
     }
 
     /**
+     * @param array $sectionData
+     *
      * @return void
      */
-    public function connectTemplate(): void
+    private static function routeCreation(array $sectionData): void
     {
 
-        require_once 'Resources/templates/profiler.php';
+        $allSections = array_merge([$sectionData['section']], $sectionData['subsections'] ?? []);
 
-    }
+        /** @var SectionInterface $section */
+        foreach ($allSections as $section) {
+            $action = sprintf('%s#%s', $section->getController(), $section->getControllerMethod());
 
-    /**
-     * @param array $data
-     *
-     * @return Generator
-     */
-    private function iterationData(array $data): Generator
-    {
-
-        foreach ($data as $key => $value) {
-            yield $key => $value;
+            Router::get($section->generateRoutePath(), $action)->name(self::generateRouteName($section));
         }
-
-    }
-
-    /**
-     * @param array $data
-     */
-    private function save(array $data): void
-    {
-
-        $report[uniqid()] = $data;
-
-        $this->cache->create(self::TYPE_CACHE, self::NAME_CACHE, $report, function (FileInterface $filesystem, string $fullPath, array $data) {
-            $fullPath = $fullPath . '.fc';
-
-            if ($filesystem->exist($fullPath)) {
-                $dataOfCache = unserialize(file_get_contents($filesystem->getRealPath($fullPath)));
-                $data = array_merge($data, $dataOfCache);
-            }
-
-            file_put_contents($filesystem->getRealPath($fullPath), serialize($data));
-        });
 
     }
 
