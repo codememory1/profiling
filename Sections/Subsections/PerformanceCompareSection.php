@@ -18,7 +18,7 @@ final class PerformanceCompareSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $routePath = '/profiling/performance/compare';
+    protected ?string $routePath = 'performance/compare';
 
     /**
      * @inheritDoc

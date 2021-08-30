@@ -17,7 +17,7 @@ final class LoggingSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $routePath = 'profiling/logging';
+    protected ?string $routePath = 'logging';
 
     /**
      * @inheritdoc

@@ -17,7 +17,7 @@ final class EventsSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $routePath = 'profiling/events';
+    protected ?string $routePath = 'events';
 
     /**
      * @inheritDoc

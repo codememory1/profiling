@@ -18,7 +18,7 @@ final class PerformanceReportResultSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $routePath = 'profiling/performance/result';
+    protected ?string $routePath = 'performance/result';
 
     /**
      * @inheritDoc

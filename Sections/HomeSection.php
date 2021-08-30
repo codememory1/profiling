@@ -19,7 +19,7 @@ final class HomeSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $routePath = 'profiling/';
+    protected ?string $routePath = '/';
 
     /**
      * @inheritDoc
