@@ -1,0 +1,145 @@
+:root {
+    --accent: #5676e8;
+    --dark-bg: #1b222b;
+    --light-bg: #2f3c4c;
+    --light-border: #495c73;
+    --dark-border: #202933;
+}
+
+header {
+    background-color: var(--dark-bg);
+}
+
+pre[data-line] {
+    padding: 1em 0 3em 3em!important;
+}
+
+.frame-code {
+    background: var(--light-bg);
+}
+
+:not(pre) > code[class*="language-"], pre[class*="language-"] {
+    background: var(--dark-bg)!important;
+}
+
+.token {
+    position: relative;
+    top: 3px;
+}
+
+.line-highlight {
+    background: #ff00002e!important;
+}
+
+.linenums {
+    color: #fff;
+}
+
+.rightButton {
+    color: #fff;
+    padding: 5px 15px;
+    transition: 0.3s;
+    box-shadow: none;
+    border: 2px solid var(--light-bg);
+}
+
+.rightButton:hover {
+    background: var(--light-bg);
+    color: #fff;
+    box-shadow: none;
+}
+
+.left-panel {
+    background: var(--light-bg);
+}
+
+.frame {
+    background: var(--dark-bg);
+    transition: background 0.3s;
+}
+
+*::-webkit-scrollbar {
+    height: 8px;
+    width: 5px;
+    background-color: var(--dark-bg);
+    cursor: pointer;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--accent);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.frame:not(:last-child) {
+    border-bottom: 1px solid var(--light-border);
+}
+
+.frame-method-info {
+    color: #fff;
+}
+
+.frame:not(.active):hover {
+    background: var(--light-bg);
+}
+
+.frame-index {
+    color: #c9bcbc;
+    background-color: rgba(0,0,0,0.33);
+}
+
+.frame.active {
+    background: var(--accent);
+    box-shadow: none;
+}
+
+.frame.active .frame-file {
+    color: #fff;
+}
+
+#handlers {
+    display: none;
+}
+
+.data-table span.empty {
+    font-weight: 300;
+    color: #fff;
+    background: #aa1f1f82;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.data-table td:first-child {
+    color: #8d8d8d;
+}
+
+.details pre.sf-dump, .details pre.sf-dump .sf-dump-num, .details pre.sf-dump .sf-dump-const, .details pre.sf-dump .sf-dump-str, .details pre.sf-dump .sf-dump-note, .details pre.sf-dump .sf-dump-ref, .details pre.sf-dump .sf-dump-public, .details pre.sf-dump .sf-dump-protected, .details pre.sf-dump .sf-dump-private, .details pre.sf-dump .sf-dump-meta, .details pre.sf-dump .sf-dump-key, .details pre.sf-dump .sf-dump-index {
+    color: #fffd28;
+}
+
+pre.sf-dump .sf-dump-str {
+    color: #ffb41e!important;
+}
+
+.details-container {
+    background: var(--dark-bg);
+}
+
+.data-table > label {
+    color: var(--accent);
+}
+
+.data-table-container > div.data-table {
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--light-border);
+    padding-bottom: 10px;
+}
+
+.code-block {
+    background: var(--accent);
+    border-radius: 0px;
+}
+
+.code-block.line-numbers.language-php{
+    padding-left: 42px!important;
+}

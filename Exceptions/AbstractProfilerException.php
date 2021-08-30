@@ -6,23 +6,23 @@ use ErrorException;
 use JetBrains\PhpStorm\Pure;
 
 /**
- * Class AbstractSectionException
+ * Class AbstractProfilerException
  *
  * @package Codememory\Components\Profiling\Exceptions
  *
  * @author  Codememory
  */
-abstract class AbstractSectionException extends ErrorException
+abstract class AbstractProfilerException extends ErrorException
 {
 
     /**
      * @param string|null $message
      */
     #[Pure]
-    public function __construct(string $message = null)
+    public function __construct(?string $message = null)
     {
 
-        parent::__construct($message);
+        parent::__construct($message ?: '');
 
     }
 

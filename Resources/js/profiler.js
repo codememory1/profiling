@@ -359,3 +359,23 @@ if(scrolls.length > 0) {
         el.prepend(scrollWrap);
     });
 }
+
+// LOAD HIDDEN TR
+
+const loadBtn = document.querySelectorAll('.load-hidden-tr');
+
+if(loadBtn.length !== 0) {
+    loadBtn.forEach((el) => {
+        const table = document.querySelector('.' + el.getAttribute('data-load-table'));
+
+        el.querySelector('span').addEventListener('click', () => {
+            const hiddenTrs = table.querySelectorAll('tr[style="display: none"]');
+
+            for (let i = 0; i < 10; i++) {
+                const tr = hiddenTrs[i];
+
+                tr.style.display = "table-row";
+            }
+        });
+    });
+}

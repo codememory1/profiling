@@ -12,15 +12,16 @@
         "php": ">=8.0",
         "ext-fileinfo": "*",
         "ext-xhprof": "*",
+        "codememory/caching": "^1.1",
         "codememory/config": "^1.1",
         "codememory/date-time": "^1.0",
-        "codememory/environment": "^1.0",
         "codememory/fs": "^1.1",
         "codememory/global-config": "^1.1",
+        "codememory/logging": "^1.0",
         "codememory/markup": "^2.0",
-        "codememory/routing": "^1.1",
+        "codememory/routing": "^1.2",
         "codememory/support": "^1.2",
-        "illuminate/collections": "^8.56"
+        "filp/whoops": "^2.14"
     },
     "autoload": {
         "psr-4": {

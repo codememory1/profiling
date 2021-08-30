@@ -2,10 +2,10 @@
 
 namespace Codememory\Components\Profiling\Controllers;
 
-use Codememory\Components\Profiling\Interfaces\SectionInterface;
+use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
 use Codememory\Components\Profiling\TemplateRenderer;
-use Codememory\Container\ServiceProvider\Interfaces\ServiceProviderInterface;
 use Codememory\Routing\Controller\AbstractController;
+use ReflectionException;
 
 /**
  * Class AbstractProfilerController
@@ -18,42 +18,20 @@ abstract class AbstractProfilerController extends AbstractController
 {
 
     /**
-     * @var array
-     */
-    private array $generalParameters = [];
-
-    /**
-     * @param ServiceProviderInterface $serviceProvider
-     */
-    public function __construct(ServiceProviderInterface $serviceProvider)
-    {
-
-        parent::__construct($serviceProvider);
-
-    }
-
-    /**
-     * @param array $parameters
-     */
-    protected function addGeneralParameters(array $parameters): void
-    {
-
-        $this->generalParameters = $parameters;
-
-    }
-
-    /**
-     * @param SectionInterface $section
-     * @param array            $parameters
+     * @param string      $section
+     * @param array       $parameters
+     * @param string|null $templatePath
      *
      * @return void
+     * @throws SectionNotImplementInterfaceException
+     * @throws ReflectionException
      */
-    protected function templateRender(SectionInterface $section, array $parameters = []): void
+    public function templateRender(string $section, array $parameters = [], ?string $templatePath = null): void
     {
 
-        $renderer = new TemplateRenderer($section, array_merge($parameters, $this->generalParameters));
+        $templateRenderer = new TemplateRenderer($section, $parameters, $templatePath);
 
-        $renderer->render();
+        $templateRenderer->render();
 
     }
 

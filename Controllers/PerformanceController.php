@@ -2,15 +2,22 @@
 
 namespace Codememory\Components\Profiling\Controllers;
 
-use Codememory\Components\Profiling\Preserver;
+use Codememory\Components\DateTime\Exceptions\InvalidTimezoneException;
+use Codememory\Components\DateTime\Time;
+use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
+use Codememory\Components\Profiling\ReportCreators\PerformanceReportCreator;
+use Codememory\Components\Profiling\Resource;
+use Codememory\Components\Profiling\Sections\Builders\PerformanceReportBuilder;
 use Codememory\Components\Profiling\Sections\PerformanceSection;
-use Codememory\Components\Profiling\Sections\Subsections\ComparePerformanceReports;
-use Codememory\Components\Profiling\Sections\Subsections\ListPerformanceReports;
-use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportsResult;
-use Codememory\Components\Profiling\XhprofWorker;
-use Codememory\Container\ServiceProvider\Interfaces\ServiceProviderInterface;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceCompareSection;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceListReportsSection;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportResultSection;
+use Codememory\Components\Profiling\XHProfWorker;
 use Codememory\HttpFoundation\Request\Request;
+use Codememory\Routing\Router;
 use Generator;
+use JetBrains\PhpStorm\ArrayShape;
+use ReflectionException;
 
 /**
  * Class PerformanceController
@@ -23,214 +30,325 @@ class PerformanceController extends AbstractProfilerController
 {
 
     /**
-     * @param ServiceProviderInterface $serviceProvider
+     * @return void
+     * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
      */
-    public function __construct(ServiceProviderInterface $serviceProvider)
+    public function index(): void
     {
 
-        parent::__construct($serviceProvider);
-
-        $this->addGeneralParameters([
-            'referer' => $this->get('request')->header->getHeader('Referer')
-        ]);
+        $this->templateRender(PerformanceSection::class);
 
     }
 
     /**
      * @return void
-     */
-    public function main(): void
-    {
-
-        $this->templateRender(new PerformanceSection());
-
-    }
-
-    /**
-     * @return void
-     */
-    public function listReports(): void
-    {
-
-        $reports = Preserver::getReport(new PerformanceReportsResult());
-
-        uasort($reports, function (array $one, array $two): bool {
-            return $one['created'] < $two['created'];
-        });
-
-        $this->templateRender(new ListPerformanceReports(), [
-            'list-reports' => $reports
-        ]);
-
-    }
-
-    /**
-     * @return void
+     * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
+     * @throws InvalidTimezoneException
      */
     public function compare(): void
     {
 
-        $reports = Preserver::getReport(new PerformanceReportsResult());
+        $reports = new PerformanceReportCreator(Router::getCurrentRoute(), new PerformanceSection(new Resource()));
 
-        uasort($reports, function (array $one, array $two): bool {
-            return $one['created'] < $two['created'];
-        });
-
-        $this->templateRender(new ComparePerformanceReports(), [
-            'list-reports' => $reports
+        $this->templateRender(PerformanceCompareSection::class, [
+            'reports'  => $this->sortByDate($reports->get()),
+            'now-time' => (new Time())->now()
         ]);
 
     }
 
     /**
-     * @param XhprofWorker $xhprofWorker
-     *
      * @return void
+     * @throws InvalidTimezoneException
+     * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
      */
-    public function result(XhprofWorker $xhprofWorker): void
+    public function listReports(): void
+    {
+
+        $reports = new PerformanceReportCreator(Router::getCurrentRoute(), new PerformanceSection(new Resource()));
+
+        $this->templateRender(PerformanceListReportsSection::class, [
+            'reports'  => $this->sortByDate($reports->get()),
+            'now-time' => (new Time())->now()
+        ]);
+
+    }
+
+    /**
+     * @return void
+     * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
+     */
+    public function result(): void
     {
 
         /** @var Request $request */
         $request = $this->get('request');
 
-        $reportsFromGet = $request->query()->get('reports');
-        $openedFunctionFromGet = $request->query()->get('func');
+        $reports = new PerformanceReportCreator(Router::getCurrentRoute(), new PerformanceSection(new Resource()));
 
-        $reportHashes = null !== $reportsFromGet ? explode(',', $reportsFromGet) : [];
+        $openedHashes = explode(',', $request->query()->get('reports'));
 
-        $mainReport = $xhprofWorker->getReportByHash($reportHashes[0])['report'];
-        $xhprofReport = $xhprofWorker->getFunctionsWithData($xhprofWorker->getUniqueFunctions($mainReport), $mainReport);
-        $reportsForCompare = [];
-
-        foreach ($reportHashes as $index => $reportHash) {
-            if ($index !== 0) {
-                $report = $xhprofWorker->getReportByHash($reportHash)['report'];
-
-                $reportsForCompare[] = $xhprofWorker->getFunctionsWithData($xhprofWorker->getUniqueFunctions($report), $report);
-            }
-        }
-
-        $compareReport = $xhprofWorker->compare($xhprofReport, ...$reportsForCompare);
-        $present = function (){};
-
-        if(count($reportHashes) > 1) {
-            $present = function (int|float|string $one, int|float|string $two): int {
-                return $this->getDifferenceToPresent($one, $two);
-            };
-        }
-
-        $this->templateRender(new PerformanceReportsResult(), [
-            'reports'                   => $reportHashes,
-            'openedFunc'                => $openedFunctionFromGet,
-            'functions'                 => $xhprofWorker->sortByKey($xhprofWorker->getAutoChildren($xhprofReport, $mainReport, $request->query()->get('function')), 'wt'),
-            'iteration'                 => function (array $data): Generator {
-                return $this->iteration($data);
-            },
-            'urlBuilder'                => function (array $parameters, ?string $url = null) use ($request) {
-                return $this->addParametersToUrl($request, $parameters, $url);
-            },
-            'compare-report'            => $xhprofWorker->sortByKey($compareReport['report'], 'wt.was'),
-            'compare-report-added'      => $compareReport['added'],
-            'compare-report-removed'    => $compareReport['removed'],
-            'overall-comparison-result' => $xhprofWorker->overallComparisonResult($compareReport['report']),
-            'get-present'               => $present,
-            'report-render'             => function (string $added, string $removed, ?int $present): string {
-                return $this->renderReport($added, $removed, $present);
-            }
+        $this->templateRender(PerformanceReportResultSection::class, [
+            'opened-hashes'      => $openedHashes,
+            'full-reports'       => $reports->get(),
+            'report'             => $this->getReport($request, $reports->get(), $openedHashes),
+            'iteration'          => $this->iteration(),
+            'url-builder'        => $this->addParametersToUrl($request),
+            'opened-function'    => $request->query()->get('function'),
+            'overall-comparison' => $this->overallComparisonResult(),
+            'diff-to-present'    => $this->getDifferenceToPresent(),
+            'render-report'      => $this->renderReport(),
+            'sort-report'        => $this->sortReport()
         ]);
 
     }
 
     /**
-     * @param array $data
+     * @param Request $request
+     * @param array   $allReports
+     * @param array   $openedHashes
      *
-     * @return Generator
+     * @return array
      */
-    private function iteration(array $data): Generator
+    private function getReport(Request $request, array $allReports, array $openedHashes): array
     {
 
-        foreach ($data as $key => $value) {
-            yield $key => $value;
+        $XHProfWorker = new XHProfWorker();
+
+        if (count($openedHashes) > 1) {
+            $reports = [];
+
+            foreach ($openedHashes as $openedHash) {
+                $report = $this->getReportByHash($allReports, $openedHash);
+
+                if (null !== $report) {
+                    $reports[] = $XHProfWorker->getUniqueReport($report->getReport());
+                }
+            }
+
+            $mainReport = $reports[array_key_first($reports)];
+
+            unset($reports[array_key_first($reports)]);
+
+            return $XHProfWorker->compareReports($mainReport, ...$reports);
+        } else if (count($openedHashes) === 1 && null !== $request->query()->get('function')) {
+            $report = $this->getReportByHash($allReports, $openedHashes[array_key_first($openedHashes)])->getReport();
+
+            if (null !== $report) {
+                return $XHProfWorker->getChildrenByParent($request->query()->get('function'), $report);
+            }
+
+            return [];
         }
+
+        $report = $this->getReportByHash($allReports, $openedHashes[array_key_first($openedHashes)])->getReport();
+
+        if (null !== $report) {
+            return $XHProfWorker->getUniqueReport($report);
+        }
+
+        return [];
 
     }
 
     /**
-     * @param Request     $request
-     * @param array       $parameters
-     * @param string|null $url
+     * @param array  $reports
+     * @param string $hash
      *
-     * @return string
+     * @return PerformanceReportBuilder|null
      */
-    private function addParametersToUrl(Request $request, array $parameters, ?string $url = null): string
+    private function getReportByHash(array $reports, string $hash): ?PerformanceReportBuilder
     {
 
-        if (null === $url) {
-            $url = $request->url->getUrl();
+        foreach ($reports as $report) {
+            if ($report->getHash() === $hash) {
+                return $report;
+            }
         }
 
-        return $request->url->addParameters($url, $parameters);
+        return null;
 
     }
 
     /**
-     * @param int|float|string $one
-     * @param int|float|string $two
+     * @param array $logs
      *
-     * @return int
+     * @return array
      */
-    private function getDifferenceToPresent(int|float|string $one, int|float|string $two): int
+    private function sortByDate(array $logs): array
     {
 
-        $one = abs((float) $one);
-        $two = abs((float) $two);
+        uasort($logs, function (PerformanceReportBuilder $one, PerformanceReportBuilder $two) {
+            if ($one->getCreated() === $two->getCreated()) {
+                return 0;
+            }
 
-        if ($one > $two) {
-            return ($one - $two) / (0 === $one ? 1 : $one) * 100;
-        } else if($two > $one) {
-            return ($two - $one) / (0 === $two ? 1 : $two) * 100;
-        }
+            return $one->getCreated() < $two->getCreated() ? 1 : -1;
+        });
 
-        return 0;
+        return $logs;
 
     }
 
     /**
-     * @param string   $added
-     * @param string   $removed
-     * @param int|null $present
-     *
-     * @return string
+     * @return callable
      */
-    private function renderReport(string $added, string $removed, ?int $present): string
+    private function iteration(): callable
     {
 
-        $added = (float) $added;
-        $removed = (float) $removed;
-        $present = $present ?: 0;
+        return function (array $data): Generator {
+            foreach ($data as $key => $value) {
+                yield $key => $value;
+            }
+        };
 
-        if (abs($removed) > $added && $present > 10) {
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return callable
+     */
+    private function addParametersToUrl(Request $request): callable
+    {
+
+        return function (array $parameters, ?string $url = null) use ($request) {
+            if (null === $url) {
+                $url = $request->url->getUrl();
+            }
+
+            return $request->url->addParameters($url, $parameters);
+        };
+
+    }
+
+    /**
+     * @return callable
+     */
+    #[ArrayShape([
+        'wt'  => "int[]",
+        'cpu' => "int[]",
+        'mu'  => "int[]",
+        'pmu' => "int[]"
+    ])]
+    private function overallComparisonResult(): callable
+    {
+
+        return function (array $compareReport) {
+            $result = [
+                'wt'  => [
+                    'added'   => 0,
+                    'removed' => 0
+                ],
+                'cpu' => [
+                    'added'   => 0,
+                    'removed' => 0
+                ],
+                'mu'  => [
+                    'added'   => 0,
+                    'removed' => 0
+                ],
+                'pmu' => [
+                    'added'   => 0,
+                    'removed' => 0
+                ]
+            ];
+
+            foreach ($compareReport as $data) {
+                $result['wt']['added'] += $data['wt']['added'];
+                $result['cpu']['added'] += $data['cpu']['added'];
+                $result['mu']['added'] += $data['mu']['added'];
+                $result['pmu']['added'] += $data['pmu']['added'];
+                $result['wt']['removed'] += $data['wt']['removed'];
+                $result['cpu']['removed'] += $data['cpu']['removed'];
+                $result['mu']['removed'] += $data['mu']['removed'];
+                $result['pmu']['removed'] += $data['pmu']['removed'];
+            }
+
+            return $result;
+        };
+
+    }
+
+    /**
+     * @return callable
+     */
+    private function getDifferenceToPresent(): callable
+    {
+
+        return function (int|float|string $one, int|float|string $two) {
+            $one = abs((float) $one);
+            $two = abs((float) $two);
+
+            if ($one > $two) {
+                return round(($one - $two) / (0 === $one ? 1 : $one) * 100);
+            } else if ($two > $one) {
+                return round(($two - $one) / (0 === $two ? 1 : $two) * 100);
+            }
+
+            return 0;
+        };
+
+    }
+
+    /**
+     * @return callable
+     */
+    private function sortReport(): callable
+    {
+
+        return function (array $report, string $key): array {
+            uasort($report, function (array $one, array $two) use ($key) {
+                if ($one[$key] === $two[$key]) {
+                    return 0;
+                }
+
+                return $one[$key] < $two[$key] ? 1 : -1;
+            });
+
+            return $report;
+        };
+
+    }
+
+    /**
+     * @return callable
+     */
+    private function renderReport(): callable
+    {
+
+        return function (string $added, string $removed, ?int $present) {
+            $added = (float) $added;
+            $removed = (float) $removed;
+            $present = $present ?: 0;
+
+            if (abs($removed) > $added && $present > 10) {
+                return <<<HTML
+                <div class="end__report green">
+                    <span class="square green"></span>
+                    <span class="report__message">Report: OK! You removed more than 10% than you added!</span>
+                </div>
+                HTML;
+            } else if (abs($removed) > $added && $present < 10) {
+                return <<<HTML
+                <div class="end__report orange">
+                    <span class="square orange"></span>
+                    <span class="report__message">Report: Not so good! The difference in numbers is not big.</span>
+                </div>
+                HTML;
+            }
+
             return <<<HTML
-            <div class="end__report green">
-                <span class="square green"></span>
-                <span class="report__message">Report: OK! You removed more than 10% than you added!</span>
+            <div class="end__report red">
+                <span class="square red"></span>
+                <span class="report__message">Report: Bad report! Added more than removed</span>
             </div>
             HTML;
-        } else if (abs($removed) > $added && $present < 10) {
-            return <<<HTML
-            <div class="end__report orange">
-                <span class="square orange"></span>
-                <span class="report__message">Report: Not so good! The difference in numbers is not big.</span>
-            </div>
-            HTML;
-        }
-
-        return <<<HTML
-        <div class="end__report red">
-            <span class="square red"></span>
-            <span class="report__message">Report: Bad report! Added more than removed</span>
-        </div>
-        HTML;
+        };
 
     }
 

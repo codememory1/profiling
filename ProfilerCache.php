@@ -5,10 +5,8 @@ namespace Codememory\Components\Profiling;
 use Codememory\Components\Caching\Cache;
 use Codememory\Components\Caching\Interfaces\CacheInterface;
 use Codememory\Components\Markup\Types\YamlType;
-use Codememory\Components\Profiling\Interfaces\ProfilerCacheInterface;
 use Codememory\FileSystem\File;
 use Codememory\FileSystem\Interfaces\FileInterface;
-use Codememory\Support\Arr;
 
 /**
  * Class ProfilerCache
@@ -17,7 +15,7 @@ use Codememory\Support\Arr;
  *
  * @author  Codememory
  */
-class ProfilerCache implements ProfilerCacheInterface
+class ProfilerCache
 {
 
     private const TYPE_CACHE = '__cdm-profiler';
@@ -26,53 +24,72 @@ class ProfilerCache implements ProfilerCacheInterface
     /**
      * @var CacheInterface
      */
-    private CacheInterface $cache;
+    private CacheInterface $caching;
 
     /**
-     * ProfilerCache construct
+     * ProfilerCache Construct
      */
     public function __construct()
     {
 
-        $this->cache = new Cache(new YamlType(), new File());
+        $this->caching = new Cache(new YamlType(), new File());
 
     }
 
     /**
-     * @inheritDoc
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Change the data in the profiler cache. The callback is passed a reference data argument that
+     * can be changed. If the cache does not exist, then it will be created
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @param callable $callback
      */
-    public function add(string $page, string $sectionName, array $data, bool $asAdd = false): ProfilerCache
+    public function change(callable $callback): void
     {
 
-        $this->cache->create(self::TYPE_CACHE, self::NAME_CACHE, $data, function (FileInterface $filesystem, string $fullPath, mixed $data) use ($page, $sectionName, $asAdd) {
-            $cacheSerialize = [];
-            $fullPath = $fullPath . '.data';
+        if ($this->caching->exist(self::TYPE_CACHE, self::NAME_CACHE)) {
+            $this->caching->get(self::TYPE_CACHE, self::NAME_CACHE, function (FileInterface $filesystem, string $fullPath) use ($callback) {
+                $fullPath = sprintf('%s.data', $fullPath);
 
-            if ($filesystem->exist($fullPath)) {
-                $cacheSerialize = unserialize(file_get_contents($filesystem->getRealPath($fullPath)));
-            }
+                $data = [];
 
-            if($asAdd) {
-                $cacheSerialize[$page][$sectionName][] = $data;
-            } else {
-                $cacheSerialize[$page][$sectionName] = $data;
-            }
+                if ($filesystem->exist($fullPath)) {
+                    $cache = file_get_contents($filesystem->getRealPath($fullPath));
+                    $data = unserialize($cache);
+                }
 
-            file_put_contents($filesystem->getRealPath($fullPath), serialize($cacheSerialize));
-        });
+                call_user_func_array($callback, [&$data]);
 
-        return $this;
+                file_put_contents($fullPath, serialize($data));
+
+                return false;
+            });
+        } else {
+            $data = [];
+
+            call_user_func_array($callback, [&$data]);
+
+            $this->caching->create(self::TYPE_CACHE, self::NAME_CACHE, $data, function (FileInterface $filesystem, string $fullPath, mixed $data) {
+                $fullPath = sprintf('%s.data', $fullPath);
+
+                file_put_contents($fullPath, serialize($data));
+            });
+        }
 
     }
 
     /**
-     * @inheritDoc
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns profiler cache data. If the cache does not exist, an empty array will be returned
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return array
      */
-    public function getAll(): array
+    public function get(): array
     {
 
-        return $this->cache->get(self::TYPE_CACHE, self::NAME_CACHE, function (FileInterface $filesystem, string $fullPath) {
-            $fullPath = $fullPath . '.data';
+        return $this->caching->get(self::TYPE_CACHE, self::NAME_CACHE, function (FileInterface $filesystem, string $fullPath) {
+            $fullPath = sprintf('%s.data', $fullPath);
 
             if (!$filesystem->exist($fullPath)) {
                 return [];
@@ -84,24 +101,16 @@ class ProfilerCache implements ProfilerCacheInterface
     }
 
     /**
-     * @inheritDoc
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Clears the profiler cache
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return void
      */
-    public function get(string $page, string $sectionName): array
+    public function remove(): void
     {
 
-        $data = Arr::set($this->getAll())::get(sprintf('%s.%s', $page, $sectionName));
-
-        return $data ?: [];
-
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function removeAllStatistic(): void
-    {
-
-        $this->cache->remove(self::TYPE_CACHE, self::NAME_CACHE);
+        $this->caching->remove(self::TYPE_CACHE, self::NAME_CACHE);
 
     }
 

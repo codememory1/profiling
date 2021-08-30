@@ -1,11 +1,7 @@
 <?php
 
-use Codememory\Components\DateTime\Time;
 use Codememory\Components\Profiling\DateFormatter;
-use Codememory\Components\Profiling\Profiler;
-use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportsResult;
-
-$nowTime = (new Time())->now();
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportResultSection;
 
 ?>
 
@@ -19,11 +15,11 @@ $nowTime = (new Time())->now();
             <span>List of available hashes:</span>
         </div>
         <div class="list__hashes scroll">
-            <?php foreach ($this->getParameters()['list-reports'] as $report): ?>
+            <?php foreach ($this->getParameter('reports') as $report): ?>
                 <div class="profiling__hash">
-                <span data-value="<?php echo $report['hash']; ?>">
-                    # <span class="blue-text"><?php echo $report['hash']; ?></span>
-                    <span class="yellow-text">(<?php echo DateFormatter::formatter($nowTime, strtotime($report['created'])); ?> age)</span>
+                <span data-value="<?php echo $report->getHash(); ?>">
+                    # <span class="blue-text"><?php echo $report->getHash(); ?></span>
+                    <span class="yellow-text">(<?php echo DateFormatter::format($report->getCreated(), $this->getParameter('now-time')); ?> age)</span>
                 </span>
                     <div class="actions__hash">
                         <span class="add-hash"><i class="fas fa-plus"></i></span>
@@ -40,8 +36,8 @@ $nowTime = (new Time())->now();
         <div class="compare-input__hashes scroll"></div>
     </div>
 </div>
-<a href="<?php echo routePath(Profiler::generateRouteName(new PerformanceReportsResult())); ?>"
-   class="mark green btn btn__compare">Compare</a>
+
+<a href="<?php echo $this->getRoutePath(PerformanceReportResultSection::class); ?>" class="mark green btn btn__compare">Compare</a>
 
 <style>
     .compare-wrap {

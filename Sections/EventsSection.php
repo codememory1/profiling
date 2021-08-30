@@ -5,14 +5,19 @@ namespace Codememory\Components\Profiling\Sections;
 use Codememory\Components\Profiling\Controllers\EventsController;
 
 /**
- * Class EventSection
+ * Class EventsSection
  *
  * @package Codememory\Components\Profiling\Sections
  *
  * @author  Codememory
  */
-final class EventSection extends AbstractSection
+final class EventsSection extends AbstractSection
 {
+
+    /**
+     * @inheritDoc
+     */
+    protected ?string $routePath = 'profiling/events';
 
     /**
      * @inheritDoc
@@ -22,7 +27,7 @@ final class EventSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $sectionName = 'Events';
+    protected ?string $name = 'Events';
 
     /**
      * @inheritDoc
@@ -37,6 +42,6 @@ final class EventSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $controllerMethod = 'main';
+    protected ?string $controllerMethod = 'index';
 
 }

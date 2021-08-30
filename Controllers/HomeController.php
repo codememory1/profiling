@@ -4,13 +4,15 @@ namespace Codememory\Components\Profiling\Controllers;
 
 use Codememory\Components\DateTime\Exceptions\InvalidTimezoneException;
 use Codememory\Components\DateTime\Time;
-use Codememory\Components\Profiling\Preserver;
+use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
+use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\ProfilerCache;
 use Codememory\Components\Profiling\Sections\HomeSection;
 use Codememory\HttpFoundation\Request\Request;
 use Codememory\HttpFoundation\Response\RedirectResponse;
 use Codememory\Support\Str;
 use JetBrains\PhpStorm\Pure;
+use ReflectionException;
 
 /**
  * Class HomeController
@@ -23,55 +25,59 @@ class HomeController extends AbstractProfilerController
 {
 
     /**
-     * @param Time $time
-     *
      * @return void
+     * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
      * @throws InvalidTimezoneException
      */
-    public function main(Time $time): void
+    public function index(): void
     {
 
-        $this->templateRender(new HomeSection(), [
-            'profiledPages'   => Preserver::getProfiledPages(),
-            'now-time'        => $time->now(),
-            'httpMethodClass' => function (string $method): string {
-                return $this->getHttpMethodClass($method);
-            }
+        $profilerCache = new ProfilerCache();
+        $time = new Time();
+
+        $profiledPages = [];
+
+        foreach ($profilerCache->get() as $dataSections) {
+            $profiledPages[] = $dataSections[HomeSection::class];
+        }
+
+        $this->templateRender(HomeSection::class, [
+            'profiledPages'     => $profiledPages,
+            'now-time'          => $time->now(),
+            'http-method-class' => $this->getHttpMethodClass()
         ]);
 
     }
 
     /**
-     * @param ProfilerCache $profilerCache
-     * @param Request       $request
+     * @param Request $request
      *
      * @return void
      */
-    public function removeAll(ProfilerCache $profilerCache, Request $request): void
+    public function removeStatistics(Request $request): void
     {
 
-        $profilerCache->removeAllStatistic();
+        (new ProfilerCache())->remove();
 
-        $redirectResponse = new RedirectResponse($request);
-
-        $redirectResponse->previous();
+        (new RedirectResponse($request))->previous();
 
     }
 
     /**
-     * @param string $method
-     *
-     * @return string
+     * @return callable
      */
     #[Pure]
-    private function getHttpMethodClass(string $method): string
+    private function getHttpMethodClass(): callable
     {
 
-        return match (Str::toUppercase($method)) {
-            'POST', 'DELETE' => 'red',
-            'GET' => 'green',
-            'HEAD' => 'orange',
-            default => 'blue'
+        return function ($method) {
+            return match (Str::toUppercase($method)) {
+                'POST', 'DELETE' => 'red',
+                'GET' => 'green',
+                'HEAD' => 'orange',
+                default => 'blue'
+            };
         };
 
     }

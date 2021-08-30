@@ -1,52 +1,47 @@
 <?php
 
-use Codememory\Components\Profiling\Profiler;
-use Codememory\Components\Profiling\Sections\Subsections\ListPerformanceReports;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceListReportsSection;
 
-$overallComparison = $this->getParameters()['overall-comparison-result'];
+$overallComparison = $this->getParameter('overall-comparison')($this->getParameter('report')['report']);
 
 $overallComparisonWtAddedMS = $this->overrideNumberFormat($overallComparison['wt']['added'] / 1000, 3);
 $overallComparisonWtAddedS = $this->overrideNumberFormat(($overallComparison['wt']['added'] / 1000) / 1000, 3);
 $overallComparisonWtRemovedMS = $this->overrideNumberFormat($overallComparison['wt']['removed'] / 1000, 3);
 $overallComparisonWtRemovedS = $this->overrideNumberFormat(($overallComparison['wt']['removed'] / 1000) / 1000, 3);
-$wtPresent = $this->getParameters()['get-present']($overallComparisonWtAddedMS, $overallComparisonWtRemovedMS);
+$wtPresent = $this->getParameter('diff-to-present')($overallComparisonWtAddedMS, $overallComparisonWtRemovedMS);
 
 $overallComparisonCpuAddedMS = $this->overrideNumberFormat($overallComparison['cpu']['added'] / 1000, 3);
 $overallComparisonCpuAddedS = $this->overrideNumberFormat(($overallComparison['cpu']['added'] / 1000) / 1000, 3);
 $overallComparisonCpuRemovedMS = $this->overrideNumberFormat($overallComparison['cpu']['removed'] / 1000, 3);
 $overallComparisonCpuRemovedS = $this->overrideNumberFormat(($overallComparison['cpu']['removed'] / 1000) / 1000, 3);
-$cpuPresent = $this->getParameters()['get-present']($overallComparisonCpuAddedMS, $overallComparisonCpuRemovedMS);
+$cpuPresent = $this->getParameter('diff-to-present')($overallComparisonCpuAddedMS, $overallComparisonCpuRemovedMS);
 
 $overallComparisonMuAddedB = $overallComparison['mu']['added'];
 $overallComparisonMuAddedMB = $this->overrideNumberFormat($overallComparison['mu']['added'] / 1e+6, 3);
 $overallComparisonMuRemovedB = $overallComparison['mu']['removed'];
 $overallComparisonMuRemovedMB = $this->overrideNumberFormat($overallComparison['mu']['removed'] / 1e+6, 3);
-$muPresent = $this->getParameters()['get-present']($overallComparisonMuAddedB, $overallComparisonMuRemovedB);
+$muPresent = $this->getParameter('diff-to-present')($overallComparisonMuAddedB, $overallComparisonMuRemovedB);
 
 $overallComparisonPmuAddedB = $overallComparison['pmu']['added'];
 $overallComparisonPmuAddedMB = $this->overrideNumberFormat($overallComparison['pmu']['added'] / 1e+6, 3);
 $overallComparisonPmuRemovedB = $overallComparison['pmu']['removed'];
 $overallComparisonPmuRemovedMB = $this->overrideNumberFormat($overallComparison['pmu']['removed'] / 1e+6, 3);
-$pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB, $overallComparisonPmuRemovedB);
+$pmuPresent = $this->getParameter('diff-to-present')($overallComparisonPmuAddedB, $overallComparisonPmuRemovedB);
 ?>
 
-<div class="content__header">
-    <h4 class="title">Result of open performance reports</h4>
-</div>
-
-<?php if ([] === $this->getParameters()['reports']): ?>
+<?php if ([] === $this->getParameter('opened-hashes')): ?>
     <div class="clear-block">
         <span>
             <span class="opacity">
                 No open reports.
             </span>
-            <a href="<?php echo routePath(Profiler::generateRouteName(new ListPerformanceReports())); ?>">List of performance reports</a>
+            <a href="<?php echo $this->getRoutePath(PerformanceListReportsSection::class); ?>">List of performance reports</a>
         </span>
     </div>
 <?php else: ?>
     <div class="opened__reports">
-        <?php foreach ($this->getParameters()['reports'] as $report): ?>
-            <span># <span class="blue-text"><?php echo $report; ?></span></span>
+        <?php foreach ($this->getParameter('opened-hashes') as $openedHash): ?>
+            <span># <span class="blue-text"><?php echo $openedHash; ?></span></span>
         <?php endforeach; ?>
     </div>
     <div class="content__navigation">
@@ -54,28 +49,28 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
             <li class="content__navigation-item active">
                 All
             </li>
-            <li class="content__navigation-item <?php echo count($this->getParameters()['reports']) === 1 ? 'disabled' : null; ?>">
+            <li class="content__navigation-item">
                 Added features
             </li>
-            <li class="content__navigation-item <?php echo count($this->getParameters()['reports']) === 1 ? 'disabled' : null; ?>">
+            <li class="content__navigation-item">
                 Removed features
             </li>
-            <li class="content__navigation-item <?php echo count($this->getParameters()['reports']) === 1 ? 'disabled' : null; ?>">
+            <li class="content__navigation-item">
                 General numeric statistics
             </li>
         </ul>
     </div>
 
-    <?php if (null !== $this->getParameters()['openedFunc']): ?>
+    <?php if (null !== $this->getParameter('opened-function')): ?>
         <div class="opened-function">
-            <span class="mark orange"><?php echo $this->getParameters()['openedFunc']; ?></span>
+            <span class="mark orange"><?php echo $this->getParameter('opened-function'); ?></span>
         </div>
     <?php endif; ?>
 
     <div class="content__screen-wrap">
         <div class="content__navigation-wrap">
             <div class="scroll on-scroll">
-                <table>
+                <table class="xhprof_table">
                     <thead>
                     <tr>
                         <th>Name</th>
@@ -88,14 +83,13 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                     </thead>
                     <tbody>
                     <?php
-                    if (count($this->getParameters()['reports']) === 1) {
-                        require $this->getPathToResource('single-performance-tr.php');
-                    } else {
-                        require $this->getPathToResource('compare-performance-tr.php');
-                    }
+                        require $this->getResource()->getPath('components/multiple-performance-compare.php');
                     ?>
                     </tbody>
                 </table>
+                <div class="load-hidden-tr" data-load-table="xhprof_table">
+                    <span>Load more</span>
+                </div>
             </div>
             <div class="scroll on-scroll">
                 <table>
@@ -110,7 +104,7 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($this->getParameters()['iteration']($this->getParameters()['compare-report-added']) as $index => $added): ?>
+                    <?php foreach ($this->getParameter('iteration')($this->getParameter('sort-report')($this->getParameter('report')['added'], 'wt')) as $index => $added): ?>
                         <?php foreach ($added as $functionName => $data): ?>
                             <tr class="green">
                                 <td>
@@ -155,7 +149,7 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($this->getParameters()['iteration']($this->getParameters()['compare-report-removed']) as $index => $removed): ?>
+                    <?php foreach ($this->getParameter('iteration')($this->getParameter('sort-report')($this->getParameter('report')['removed'], 'wt')) as $index => $removed): ?>
                         <?php foreach ($removed as $functionName => $data): ?>
                             <tr class="red">
                                 <td>
@@ -196,18 +190,18 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                                 <div class="statistic__block-data">
                                     <span class="statistic__block-present"><?php echo $wtPresent; ?>%</span>
                                     <div class="statistic__block-item">
-                                        <span class="square green"></span>
-                                        <span class="green-text">+<?php echo $overallComparisonWtAddedMS; ?> ms
+                                        <span class="square red"></span>
+                                        <span class="red-text">+<?php echo $overallComparisonWtAddedMS; ?> ms
                                         <span class="orange-text">(+<?php echo $overallComparisonWtAddedS; ?> s)</span></span>
                                     </div>
                                     <div class="statistic__block-item">
-                                        <span class="square red"></span>
-                                        <span class="red-text"><?php echo $overallComparisonWtRemovedMS; ?> ms
+                                        <span class="square green"></span>
+                                        <span class="green-text"><?php echo $overallComparisonWtRemovedMS; ?> ms
                                         <span class="orange-text">(<?php echo $overallComparisonWtRemovedS; ?> s)</span></span>
                                     </div>
                                 </div>
                             </div>
-                            <?php echo $this->getParameters()['report-render']($overallComparisonWtAddedMS, $overallComparisonWtRemovedMS, $wtPresent); ?>
+                            <?php echo $this->getParameter('render-report')($overallComparisonWtAddedMS, $overallComparisonWtRemovedMS, $wtPresent); ?>
                         </div>
                     </div>
                     <div class="statistic__block">
@@ -217,18 +211,18 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                                 <div class="statistic__block-data">
                                     <span class="statistic__block-present"><?php echo $cpuPresent; ?>%</span>
                                     <div class="statistic__block-item">
-                                        <span class="square green"></span>
-                                        <span class="green-text">+<?php echo $overallComparisonCpuAddedMS; ?> ms
+                                        <span class="square red"></span>
+                                        <span class="red-text">+<?php echo $overallComparisonCpuAddedMS; ?> ms
                                         <span class="orange-text">(+<?php echo $overallComparisonCpuAddedS; ?> s)</span></span>
                                     </div>
                                     <div class="statistic__block-item">
-                                        <span class="square red"></span>
-                                        <span class="red-text"><?php echo $overallComparisonCpuRemovedMS; ?> ms
+                                        <span class="square green"></span>
+                                        <span class="green-text"><?php echo $overallComparisonCpuRemovedMS; ?> ms
                                         <span class="orange-text">(<?php echo $overallComparisonCpuRemovedS; ?> s)</span></span>
                                     </div>
                                 </div>
                             </div>
-                            <?php echo $this->getParameters()['report-render']($overallComparisonCpuAddedMS, $overallComparisonCpuRemovedMS, $cpuPresent); ?>
+                            <?php echo $this->getParameter('render-report')($overallComparisonCpuAddedMS, $overallComparisonCpuRemovedMS, $cpuPresent); ?>
                         </div>
                     </div>
                     <div class="statistic__block">
@@ -238,18 +232,18 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                                 <div class="statistic__block-data">
                                     <span class="statistic__block-present"><?php echo $muPresent; ?>%</span>
                                     <div class="statistic__block-item">
-                                        <span class="square green"></span>
-                                        <span class="green-text">+<?php echo $overallComparisonMuAddedB; ?> B
+                                        <span class="square red"></span>
+                                        <span class="red-text">+<?php echo $overallComparisonMuAddedB; ?> B
                                         <span class="orange-text">(+<?php echo $overallComparisonMuAddedMB; ?> MB)</span></span>
                                     </div>
                                     <div class="statistic__block-item">
-                                        <span class="square red"></span>
-                                        <span class="red-text"><?php echo $overallComparisonMuRemovedB; ?> B
+                                        <span class="square green"></span>
+                                        <span class="green-text"><?php echo $overallComparisonMuRemovedB; ?> B
                                         <span class="orange-text">(<?php echo $overallComparisonMuRemovedMB; ?> MB)</span></span>
                                     </div>
                                 </div>
                             </div>
-                            <?php echo $this->getParameters()['report-render']($overallComparisonMuAddedB, $overallComparisonMuRemovedB, $muPresent); ?>
+                            <?php echo $this->getParameter('render-report')($overallComparisonMuAddedB, $overallComparisonMuRemovedB, $muPresent); ?>
                         </div>
                     </div>
                     <div class="statistic__block">
@@ -259,17 +253,18 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
                                 <div class="statistic__block-data">
                                     <span class="statistic__block-present"><?php echo $pmuPresent; ?>%</span>
                                     <div class="statistic__block-item">
-                                        <span class="square green"></span>
-                                        <span class="green-text">+<?php echo $overallComparisonPmuAddedB; ?> B
+                                        <span class="square red"></span>
+                                        <span class="red-text">+<?php echo $overallComparisonPmuAddedB; ?> B
                                         <span class="orange-text">(+<?php echo $overallComparisonPmuAddedMB; ?> MB)</span></span>
                                     </div>
                                     <div class="statistic__block-item">
-                                        <span class="red-text"><?php echo $overallComparisonPmuRemovedB; ?> B
+                                        <span class="square green"></span>
+                                        <span class="green-text"><?php echo $overallComparisonPmuRemovedB; ?> B
                                         <span class="orange-text">(<?php echo $overallComparisonPmuRemovedMB; ?> MB)</span></span>
                                     </div>
                                 </div>
                             </div>
-                            <?php echo $this->getParameters()['report-render']($overallComparisonPmuAddedB, $overallComparisonPmuRemovedB, $pmuPresent); ?>
+                            <?php echo $this->getParameter('render-report')($overallComparisonPmuAddedB, $overallComparisonPmuRemovedB, $pmuPresent); ?>
                         </div>
                     </div>
                 </div>
@@ -420,4 +415,3 @@ $pmuPresent = $this->getParameters()['get-present']($overallComparisonPmuAddedB,
         top: 27px;
     }
 </style>
-<script type="application/javascript" src="<?php echo $this->getRecourseInBase('js/ResizeSensor.js'); ?>"></script>

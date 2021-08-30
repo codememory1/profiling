@@ -3,6 +3,8 @@
 namespace Codememory\Components\Profiling\Sections;
 
 use Codememory\Components\Profiling\Controllers\PerformanceController;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceCompareSection;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceListReportsSection;
 
 /**
  * Class PerformanceSection
@@ -17,12 +19,17 @@ final class PerformanceSection extends AbstractSection
     /**
      * @inheritdoc
      */
+    protected ?string $routePath = 'profiling/performance';
+
+    /**
+     * @inheritdoc
+     */
     protected ?string $icon = '<i class="fas fa-analytics"></i>';
 
     /**
      * @inheritdoc
      */
-    protected ?string $sectionName = 'Page performance';
+    protected ?string $name = 'Performance';
 
     /**
      * @inheritdoc
@@ -37,6 +44,14 @@ final class PerformanceSection extends AbstractSection
     /**
      * @inheritdoc
      */
-    protected ?string $controllerMethod = 'main';
+    protected ?string $controllerMethod = 'index';
+
+    /**
+     * @inheritdoc
+     */
+    protected array $subsections = [
+        PerformanceListReportsSection::class,
+        PerformanceCompareSection::class
+    ];
 
 }

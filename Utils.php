@@ -30,37 +30,129 @@ class Utils
 
     /**
      * @throws ConfigPathNotExistException
-     * @throws ConfigNotFoundException
      * @throws EnvironmentVariableNotFoundException
      * @throws ParsingErrorException
      * @throws VariableParsingErrorException
+     * @throws ConfigNotFoundException
      */
     public function __construct()
     {
 
         $config = new Config(new File());
 
-        $this->config = $config->open(GlobalConfig::get('profiling.configName'), $this->defaultConfig());
-
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubdomain(): string
-    {
-
-        return $this->config->get('subdomain');
+        $this->config = $config->open(GlobalConfig::get('profiler.configName'), $this->defaultConfig());
 
     }
 
     /**
      * @return bool
      */
-    public function getEnabledInProd(): bool
+    public function isDev(): bool
     {
 
-        return $this->config->get('security.enabledInProduction');
+        $mode = $this->config->get('mode');
+
+        if (preg_match('/^dev/', $mode)) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProd(): bool
+    {
+
+        $mode = $this->config->get('mode');
+
+        if (preg_match('/^prod/', $mode)) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function enabledProfiler(): bool
+    {
+
+        return $this->config->get('profiler.enabled');
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProfilingController(): bool
+    {
+
+        return $this->config->get('profiler.controllerProfiling');
+
+    }
+
+    /**
+     * @return array
+     */
+    public function profilingPages(): array
+    {
+
+        return $this->config->get('profiler.profilingPages');
+
+    }
+
+    /**
+     * @return string
+     */
+    public function profilerSubdomain(): string
+    {
+
+        return $this->config->get('profiler.security.subdomain');
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function enabledProfilerInProduction(): bool
+    {
+
+        return $this->config->get('profiler.security.enabledInProduction');
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function enabledToolbar(): bool
+    {
+
+        return $this->config->get('toolbar.enabled');
+
+    }
+
+    /**
+     * @return bool
+     */
+    public function enabledToolbarInProduction(): bool
+    {
+
+        return $this->config->get('toolbar.enabledInProduction');
+
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function enableToolbarByIp(): bool|string
+    {
+
+        return $this->config->get('toolbar.enableByIp');
 
     }
 
@@ -68,16 +160,28 @@ class Utils
      * @return array
      */
     #[ArrayShape([
-        'subdomain' => "mixed",
-        'security' => "array"
+        'mode'     => "string",
+        'profiler' => "array",
+        'toolbar'  => "array"
     ])]
     private function defaultConfig(): array
     {
 
         return [
-            'subdomain' => GlobalConfig::get('profiling.subdomain'),
-            'security'  => [
-                'enabledInProduction' => GlobalConfig::get('profiling.enabledInProduction')
+            'mode'     => GlobalConfig::get('profiler.mode'),
+            'profiler' => [
+                'enabled'             => GlobalConfig::get('profiler.enabled'),
+                'controllerProfiling' => true,
+                'profilingPages'      => [],
+                'security'            => [
+                    'subdomain'           => GlobalConfig::get('profiler.security.subdomain'),
+                    'enabledInProduction' => GlobalConfig::get('profiler.security.enabledInProduction')
+                ]
+            ],
+            'toolbar'  => [
+                'enabled'             => GlobalConfig::get('profiler.toolbar.enabled'),
+                'enabledInProduction' => GlobalConfig::get('profiler.toolbar.enabledInProduction'),
+                'enableByIp'          => GlobalConfig::get('profiler.toolbar.enableByIp'),
             ]
         ];
 

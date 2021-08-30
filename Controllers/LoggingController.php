@@ -2,10 +2,15 @@
 
 namespace Codememory\Components\Profiling\Controllers;
 
-use Codememory\Components\Profiling\Preserver;
+use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
+use Codememory\Components\Profiling\ReportCreators\LoggingReportCreator;
+use Codememory\Components\Profiling\Resource;
+use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
 use Codememory\Components\Profiling\Sections\LoggingSection;
+use Codememory\Routing\Router;
 use Codememory\Support\Str;
 use JetBrains\PhpStorm\Pure;
+use ReflectionException;
 
 /**
  * Class LoggingController
@@ -18,60 +23,84 @@ class LoggingController extends AbstractProfilerController
 {
 
     /**
-     * @param LoggingSection $section
-     *
      * @return void
+     * @throws SectionNotImplementInterfaceException
+     * @throws ReflectionException
      */
-    public function main(LoggingSection $section): void
+    public function index(): void
     {
 
-        $logs = Preserver::getReport($section);
+        $loggingReportCreator = new LoggingReportCreator(Router::getCurrentRoute(), new LoggingSection(new Resource()));
 
-        $this->templateRender($section, [
-            'allLogs'     => $logs,
-            'errorLogs'   => $this->getLogsByLevel($logs, 'error'),
-            'debugLogs'   => $this->getLogsByLevel($logs, 'debug'),
-            'warningLogs' => $this->getLogsByLevel($logs, 'warning'),
-            'noticeLogs'  => $this->getLogsByLevel($logs, 'notice'),
-            'alertLogs'   => $this->getLogsByLevel($logs, 'alert'),
-            'classLevel'  => function (string $level): string {
-                return $this->getLevelClass($level);
-            }
+        $logs = $this->sortByDate($loggingReportCreator->get());
+
+        $this->templateRender(LoggingSection::class, [
+            'logs'        => $logs,
+            'sort-logs'   => $this->sortLogsByLevel($logs),
+            'level-class' => $this->getLevelClass(),
         ]);
 
     }
 
     /**
-     * @param array  $logs
-     * @param string $level
+     * @param array $logs
      *
-     * @return array
+     * @return callable
      */
-    private function getLogsByLevel(array $logs, string $level): array
+    private function sortLogsByLevel(array $logs): callable
     {
 
-        return array_filter($logs, function (mixed $data) use ($level) {
-            return $data['level'] === Str::toUppercase($level);
-        });
+        return function (string $level) use ($logs) {
+            $sortedLogs = [];
+
+            /** @var LoggingBuilder $log */
+            foreach ($logs as $log) {
+                if ($log->getLevel() === Str::toUppercase($level)) {
+                    $sortedLogs[] = $log;
+                }
+            }
+
+            return $sortedLogs;
+        };
 
     }
 
     /**
-     * @param string $level
+     * @param array $logs
      *
-     * @return string
+     * @return array
      */
-    #[Pure]
-    private function getLevelClass(string $level): string
+    private function sortByDate(array $logs): array
     {
 
-        return match (Str::toUppercase($level)) {
-            'ERROR' => 'red',
-            'DEBUG' => 'dark',
-            'WARNING' => 'warning',
-            'NOTICE' => 'blue',
-            'ALERT' => 'alert',
-            default => 'yellow',
+        uasort($logs, function (LoggingBuilder $one, LoggingBuilder $two) {
+            if ($one->getCreated() === $two->getCreated()) {
+                return 0;
+            }
+
+            return $one->getCreated() < $two->getCreated() ? 1 : -1;
+        });
+
+        return $logs;
+
+    }
+
+    /**
+     * @return callable
+     */
+    #[Pure]
+    private function getLevelClass(): callable
+    {
+
+        return function (string $level): string {
+            return match (Str::toUppercase($level)) {
+                'ERROR' => 'red',
+                'DEBUG' => 'dark',
+                'WARNING' => 'warning',
+                'NOTICE' => 'blue',
+                'ALERT' => 'alert',
+                default => 'yellow',
+            };
         };
 
     }

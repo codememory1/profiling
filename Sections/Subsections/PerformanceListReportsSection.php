@@ -3,26 +3,32 @@
 namespace Codememory\Components\Profiling\Sections\Subsections;
 
 use Codememory\Components\Profiling\Controllers\PerformanceController;
+use Codememory\Components\Profiling\Sections\AbstractSection;
 
 /**
- * Class ListPerformanceReports
+ * Class PerformanceListReportsSection
  *
  * @package Codememory\Components\Profiling\Sections\Subsections
  *
  * @author  Codememory
  */
-final class ListPerformanceReports extends AbstractSubsection
+final class PerformanceListReportsSection extends AbstractSection
 {
 
     /**
      * @inheritdoc
      */
-    protected ?string $sectionName = 'List of performance reports';
+    protected ?string $routePath = 'profiling/performance/list';
 
     /**
      * @inheritdoc
      */
-    protected ?string $contentPath = 'views/list-performance-reports.php';
+    protected ?string $name = 'List of performance reports';
+
+    /**
+     * @inheritdoc
+     */
+    protected ?string $contentPath = 'views/performance-list-reports.php';
 
     /**
      * @inheritdoc

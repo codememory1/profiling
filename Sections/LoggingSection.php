@@ -15,6 +15,11 @@ final class LoggingSection extends AbstractSection
 {
 
     /**
+     * @inheritDoc
+     */
+    protected ?string $routePath = 'profiling/logging';
+
+    /**
      * @inheritdoc
      */
     protected ?string $icon = '<i class="fas fa-file-signature"></i>';
@@ -22,7 +27,7 @@ final class LoggingSection extends AbstractSection
     /**
      * @inheritdoc
      */
-    protected ?string $sectionName = 'Logging';
+    protected ?string $name = 'Logging';
 
     /**
      * @inheritdoc
@@ -37,6 +42,6 @@ final class LoggingSection extends AbstractSection
     /**
      * @inheritdoc
      */
-    protected ?string $controllerMethod = 'main';
+    protected ?string $controllerMethod = 'index';
 
 }

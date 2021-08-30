@@ -3,6 +3,8 @@
 namespace Codememory\Components\Profiling\Sections;
 
 use Codememory\Components\Profiling\Controllers\HomeController;
+use Codememory\Components\Profiling\Sections\Builders\HomeBuilder;
+use Codememory\Routing\Route;
 
 /**
  * Class HomeSection
@@ -17,12 +19,17 @@ final class HomeSection extends AbstractSection
     /**
      * @inheritDoc
      */
+    protected ?string $routePath = 'profiling/';
+
+    /**
+     * @inheritDoc
+     */
     protected ?string $icon = '<i class="fas fa-home"></i>';
 
     /**
      * @inheritDoc
      */
-    protected ?string $sectionName = 'Profiler';
+    protected ?string $name = 'Profiler';
 
     /**
      * @inheritDoc
@@ -37,6 +44,6 @@ final class HomeSection extends AbstractSection
     /**
      * @inheritDoc
      */
-    protected ?string $controllerMethod = 'main';
+    protected ?string $controllerMethod = 'index';
 
 }

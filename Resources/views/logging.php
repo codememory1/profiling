@@ -1,3 +1,8 @@
+<?php
+
+use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
+?>
+
 <div class="content__header">
     <h4 class="title">List of logs</h4>
 </div>
@@ -39,23 +44,23 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($this->getParameters()['allLogs'] as $log): ?>
+                <?php foreach ($this->getParameter('logs') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log['demandedClass']; ?></span>
-                            <span class="mark red"><?php echo $log['demandedMethod']; ?></span>
+                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
+                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
                         </td>
                         <td>
-                            <span class="mark <?php echo $this->getParameters()['classLevel']($log['level']); ?>"><?php echo $log['level']; ?></span>
+                            <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>"><?php echo $log->getLevel(); ?></span>
                         </td>
                         <td>
-                            <?php echo $log['message']; ?>
+                            <?php echo $log->getMessage(); ?>
                         </td>
                         <td>
-                            <?php echo $log['context']; ?>
+                            <?php echo $log->getContext(); ?>
                         </td>
                         <td>
-                            <?php echo $log['date']; ?>
+                            <?php echo $log->getCreated(); ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -74,23 +79,25 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($this->getParameters()['errorLogs'] as $log): ?>
+                <?php foreach ($this->getParameter('sort-logs')('error') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log['demandedClass']; ?></span>
-                            <span class="mark red"><?php echo $log['demandedMethod']; ?></span>
+                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
+                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
                         </td>
                         <td>
-                            <span class="mark <?php echo $this->getParameters()['classLevel']($log['level']); ?>"><?php echo $log['level']; ?></span>
+                            <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
+                                <?php echo $log->getLevel(); ?>
+                            </span>
                         </td>
                         <td>
-                            <?php echo $log['message']; ?>
+                            <?php echo $log->getMessage(); ?>
                         </td>
                         <td>
-                            <?php echo $log['context']; ?>
+                            <?php echo $log->getContext(); ?>
                         </td>
                         <td>
-                            <?php echo $log['date']; ?>
+                            <?php echo $log->getCreated(); ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -109,23 +116,25 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($this->getParameters()['debugLogs'] as $log): ?>
+                <?php foreach ($this->getParameter('sort-logs')('debug') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log['demandedClass']; ?></span>
-                            <span class="mark red"><?php echo $log['demandedMethod']; ?></span>
+                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
+                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
                         </td>
                         <td>
-                            <span class="mark <?php echo $this->getParameters()['classLevel']($log['level']); ?>"><?php echo $log['level']; ?></span>
+                            <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
+                                <?php echo $log->getLevel(); ?>
+                            </span>
                         </td>
                         <td>
-                            <?php echo $log['message']; ?>
+                            <?php echo $log->getMessage(); ?>
                         </td>
                         <td>
-                            <?php echo $log['context']; ?>
+                            <?php echo $log->getContext(); ?>
                         </td>
                         <td>
-                            <?php echo $log['date']; ?>
+                            <?php echo $log->getCreated(); ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -144,23 +153,25 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($this->getParameters()['warningLogs'] as $log): ?>
+                <?php foreach ($this->getParameter('sort-logs')('warning') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log['demandedClass']; ?></span>
-                            <span class="mark red"><?php echo $log['demandedMethod']; ?></span>
+                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
+                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
                         </td>
                         <td>
-                            <span class="mark <?php echo $this->getParameters()['classLevel']($log['level']); ?>"><?php echo $log['level']; ?></span>
+                            <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
+                                <?php echo $log->getLevel(); ?>
+                            </span>
                         </td>
                         <td>
-                            <?php echo $log['message']; ?>
+                            <?php echo $log->getMessage(); ?>
                         </td>
                         <td>
-                            <?php echo $log['context']; ?>
+                            <?php echo $log->getContext(); ?>
                         </td>
                         <td>
-                            <?php echo $log['date']; ?>
+                            <?php echo $log->getCreated(); ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -179,23 +190,25 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($this->getParameters()['noticeLogs'] as $log): ?>
+                <?php foreach ($this->getParameter('sort-logs')('notice') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log['demandedClass']; ?></span>
-                            <span class="mark red"><?php echo $log['demandedMethod']; ?></span>
+                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
+                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
                         </td>
                         <td>
-                            <span class="mark <?php echo $this->getParameters()['classLevel']($log['level']); ?>"><?php echo $log['level']; ?></span>
+                            <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
+                                <?php echo $log->getLevel(); ?>
+                            </span>
                         </td>
                         <td>
-                            <?php echo $log['message']; ?>
+                            <?php echo $log->getMessage(); ?>
                         </td>
                         <td>
-                            <?php echo $log['context']; ?>
+                            <?php echo $log->getContext(); ?>
                         </td>
                         <td>
-                            <?php echo $log['date']; ?>
+                            <?php echo $log->getCreated(); ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -214,23 +227,25 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($this->getParameters()['alertLogs'] as $log): ?>
+                <?php foreach ($this->getParameter('sort-logs')('alert') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log['demandedClass']; ?></span>
-                            <span class="mark red"><?php echo $log['demandedMethod']; ?></span>
+                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
+                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
                         </td>
                         <td>
-                            <span class="mark <?php echo $this->getParameters()['classLevel']($log['level']); ?>"><?php echo $log['level']; ?></span>
+                            <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
+                                <?php echo $log->getLevel(); ?>
+                            </span>
                         </td>
                         <td>
-                            <?php echo $log['message']; ?>
+                            <?php echo $log->getMessage(); ?>
                         </td>
                         <td>
-                            <?php echo $log['context']; ?>
+                            <?php echo $log->getContext(); ?>
                         </td>
                         <td>
-                            <?php echo $log['date']; ?>
+                            <?php echo $log->getCreated(); ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

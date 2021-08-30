@@ -3,26 +3,32 @@
 namespace Codememory\Components\Profiling\Sections\Subsections;
 
 use Codememory\Components\Profiling\Controllers\PerformanceController;
+use Codememory\Components\Profiling\Sections\AbstractSection;
 
 /**
- * Class ComparePerformanceReports
+ * Class PerformanceReportResultSection
  *
  * @package Codememory\Components\Profiling\Sections\Subsections
  *
  * @author  Codememory
  */
-final class ComparePerformanceReports extends AbstractSubsection
+final class PerformanceReportResultSection extends AbstractSection
 {
 
     /**
      * @inheritDoc
      */
-    protected ?string $sectionName = 'Compare performance reports';
+    protected ?string $routePath = 'profiling/performance/result';
 
     /**
      * @inheritDoc
      */
-    protected ?string $contentPath = 'views/compare-performance-reports.php';
+    protected ?string $name = 'Performance reports result';
+
+    /**
+     * @inheritDoc
+     */
+    protected ?string $contentPath = 'views/performance-report-result.php';
 
     /**
      * @inheritDoc
@@ -32,6 +38,6 @@ final class ComparePerformanceReports extends AbstractSubsection
     /**
      * @inheritDoc
      */
-    protected ?string $controllerMethod = 'compare';
+    protected ?string $controllerMethod = 'result';
 
 }

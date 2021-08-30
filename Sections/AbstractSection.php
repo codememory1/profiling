@@ -2,9 +2,9 @@
 
 namespace Codememory\Components\Profiling\Sections;
 
+use Codememory\Components\Profiling\Interfaces\ResourceInterface;
 use Codememory\Components\Profiling\Interfaces\SectionInterface;
-use Codememory\Support\Str;
-use JetBrains\PhpStorm\Pure;
+use Codememory\Components\Profiling\ProfilerCache;
 
 /**
  * Class AbstractSection
@@ -17,6 +17,21 @@ abstract class AbstractSection implements SectionInterface
 {
 
     /**
+     * @var ResourceInterface
+     */
+    protected ResourceInterface $resource;
+
+    /**
+     * @var ProfilerCache
+     */
+    protected ProfilerCache $profilerCache;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $routePath = null;
+
+    /**
      * @var string|null
      */
     protected ?string $icon = null;
@@ -24,7 +39,12 @@ abstract class AbstractSection implements SectionInterface
     /**
      * @var string|null
      */
-    protected ?string $sectionName = null;
+    protected ?string $name = null;
+
+    /**
+     * @var array
+     */
+    protected array $subsections = [];
 
     /**
      * @var string|null
@@ -42,19 +62,28 @@ abstract class AbstractSection implements SectionInterface
     protected ?string $controllerMethod = null;
 
     /**
-     * @inheritdoc
+     * @param ResourceInterface $resource
      */
-    public function generateRoutePath(): string
+    public function __construct(ResourceInterface $resource)
     {
 
-        $sectionName = Str::snakeCase($this->getSectionName());
-
-        return sprintf('profiler-section=%s', Str::toLowercase($sectionName));
+        $this->resource = $resource;
+        $this->profilerCache = new ProfilerCache();
 
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
+     */
+    public function getRoutePath(): ?string
+    {
+
+        return $this->routePath;
+
+    }
+
+    /**
+     * @inheritDoc
      */
     public function getIcon(): ?string
     {
@@ -64,27 +93,45 @@ abstract class AbstractSection implements SectionInterface
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
-    public function getSectionName(): ?string
+    public function getName(): ?string
     {
 
-        return $this->sectionName;
+        return $this->name;
 
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     public function getContentPath(): ?string
     {
 
-        return $this->contentPath;
+        return $this->resource->getPath($this->contentPath);
 
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
+     */
+    final public function getSubsections(): array
+    {
+
+        $subsections = [];
+
+        foreach ($this->subsections as $subsection) {
+            if (class_exists($subsection)) {
+                $subsections[] = new $subsection($this->resource);
+            }
+        }
+
+        return $subsections;
+
+    }
+
+    /**
+     * @inheritDoc
      */
     public function getController(): ?string
     {
@@ -94,7 +141,7 @@ abstract class AbstractSection implements SectionInterface
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     public function getControllerMethod(): ?string
     {

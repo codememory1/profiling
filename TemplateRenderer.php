@@ -2,7 +2,12 @@
 
 namespace Codememory\Components\Profiling;
 
+use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
+use Codememory\Components\Profiling\Interfaces\ResourceInterface;
 use Codememory\Components\Profiling\Interfaces\SectionInterface;
+use Codememory\Support\Arr;
+use ReflectionClass;
+use ReflectionException;
 
 /**
  * Class TemplateRenderer
@@ -14,7 +19,12 @@ use Codememory\Components\Profiling\Interfaces\SectionInterface;
 class TemplateRenderer
 {
 
-    private const DEFAULT_TEMPLATE = 'default.php';
+    private const DEFAULT_TEMPLATE = 'profiler.php';
+
+    /**
+     * @var ResourceInterface
+     */
+    private ResourceInterface $resource;
 
     /**
      * @var SectionInterface
@@ -27,49 +37,84 @@ class TemplateRenderer
     private array $parameters;
 
     /**
-     * @param SectionInterface $section
-     * @param array            $parameters
+     * @var string
      */
-    public function __construct(SectionInterface $section, array $parameters = [])
+    private string $templatePath;
+
+    /**
+     * @param string      $section
+     * @param array       $parameters
+     * @param string|null $template
+     *
+     * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
+     */
+    public function __construct(string $section, array $parameters = [], ?string $template = null)
     {
 
-        $this->section = $section;
+        $this->resource = new Resource();
+
+        $reflectorSection = new ReflectionClass($section);
+
+        if (!$reflectorSection->implementsInterface(SectionInterface::class)) {
+            throw new SectionNotImplementInterfaceException($section, SectionInterface::class);
+        }
+
+        /** @var SectionInterface $sectionObject */
+        $sectionObject = $reflectorSection->newInstance($this->resource);
+
+        $this->section = $sectionObject;
         $this->parameters = $parameters;
+        $this->templatePath = $template ?: $this->resource->getPath(self::DEFAULT_TEMPLATE);
 
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Rendering a section template
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Includes the main profiler template
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
      * @return void
      */
     public function render(): void
     {
 
-        require_once $this->getPathToResource(self::DEFAULT_TEMPLATE);
+        require_once $this->templatePath;
 
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Returns the content of a section
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Includes the content file of the section
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
-     * @return string
+     * @return void
      */
-    public function getContent(): string
+    public function contentRender(): void
     {
 
-        return file_get_contents($this->getPathToResource($this->section->getContentPath()));
+        require_once $this->section->getContentPath();
 
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Returns the parameters to be passed to the template
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns an object for working with resources
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return ResourceInterface
+     */
+    public function getResource(): ResourceInterface
+    {
+
+        return $this->resource;
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns an array of all passed parameters to the template
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
      * @return array
      */
@@ -81,57 +126,35 @@ class TemplateRenderer
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Returns the full path to the resource folder
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Get a specific parameter
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
-     * @param string|null $path
+     * @param string $keys
      *
-     * @return string
+     * @return mixed
      */
-    public function getPathToResource(?string $path = null): string
+    public function getParameter(string $keys): mixed
     {
 
-        return __DIR__ . '/Resources/' . $path;
+        return Arr::set($this->getParameters())::get($keys);
 
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Reads a specific resource file and returns
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns the route path by section name
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
-     * @param string $path
-     *
-     * @return string
-     */
-    public function getReadResource(string $path): string
-    {
-
-        return file_get_contents($this->getPathToResource($path));
-
-    }
-
-    /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Returns the base64 text of a resource file
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
-     *
-     * @param string $path
+     * @param string $section
+     * @param array  $parameters
      *
      * @return string
      */
-    public function getRecourseInBase(string $path): string
+    public function getRoutePath(string $section, array $parameters = []): string
     {
 
-        $path = $this->getPathToResource($path);
-        $mimeType = str_replace([
-            'plain'
-        ], [
-            pathinfo($path, PATHINFO_EXTENSION)
-        ], mime_content_type($path));
-
-        return sprintf('data:%s;base64,%s', $mimeType, base64_encode(file_get_contents($path)));
+        return routePath(sprintf('%s%s', Profiler::ROUTE_NAME_PREFIX, $section), $parameters);
 
     }
 

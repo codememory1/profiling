@@ -2,16 +2,17 @@
 
 namespace Codememory\Components\Profiling;
 
+use Codememory\Components\Profiling\Controllers\HomeController;
+use Codememory\Components\Profiling\Interfaces\ProfilerInterface;
 use Codememory\Components\Profiling\Interfaces\SectionInterface;
-use Codememory\Components\Profiling\Sections\EventSection;
+use Codememory\Components\Profiling\Sections\EventsSection;
 use Codememory\Components\Profiling\Sections\HomeSection;
 use Codememory\Components\Profiling\Sections\LoggingSection;
 use Codememory\Components\Profiling\Sections\PerformanceSection;
-use Codememory\Components\Profiling\Sections\Subsections\ComparePerformanceReports;
-use Codememory\Components\Profiling\Sections\Subsections\ListPerformanceReports;
-use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportsResult;
+use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportResultSection;
+use Codememory\HttpFoundation\Request\Request;
 use Codememory\Routing\Router;
-use ReflectionClass;
+use Codememory\Components\Profiling\ErrorHandler\ErrorHandler;
 
 /**
  * Class Profiler
@@ -20,133 +21,209 @@ use ReflectionClass;
  *
  * @author  Codememory
  */
-class Profiler
+class Profiler implements ProfilerInterface
 {
 
-    /**
-     * @var Utils
-     */
-    private static Utils $utils;
+    public const ROUTE_NAME_PREFIX = '__cdm-profiler_';
+    public const STATISTIC_COOKIE_KEY = '__cdm-profiler-statistic';
 
     /**
-     * @return void
+     * @var array
      */
-    public static function enable(): void
+    private static array $sections = [];
+
+    /**
+     * @var array
+     */
+    private static array $hiddenSections = [];
+
+    /**
+     * @var Utils|null
+     */
+    private static ?Utils $utils = null;
+
+    /**
+     * @var Request|null
+     */
+    private static ?Request $request = null;
+
+    /**
+     * @var float|null
+     */
+    private static ?float $unixTime = null;
+
+    /**
+     * @inheritDoc
+     */
+    public static function addSection(SectionInterface $section): ProfilerInterface
     {
 
+        self::$sections[] = $section;
+
+        return new self();
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Profiler initialization. The method should be called only once and at
+     * the beginning of the project
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return void
+     */
+    public static function init(): void
+    {
+
+        (new ErrorHandler())->modeHandler();
+
+        self::$unixTime = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
         self::$utils = new Utils();
+        self::$request = new Request();
+
+        self::initByConfiguration();
 
     }
 
     /**
-     * @return void
-     */
-    public static function enablePerformance(): void
-    {
-
-        if (isDev() || self::$utils->getEnabledInProd()) {
-            xhprof_enable(XHPROF_FLAGS_CPU | XHPROF_FLAGS_MEMORY);
-        }
-
-    }
-
-    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns an array of objects of all sections of the profiler
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
      * @return array
      */
-    public static function getPerformanceReport(): array
+    public static function getSections(): array
     {
 
-        if (isDev() || self::$utils->getEnabledInProd()) {
-            return xhprof_disable();
-        }
-
-        return [];
+        return self::$sections;
 
     }
 
     /**
-     * @return void
-     * @throws Exceptions\SectionExistException
-     * @throws Exceptions\SectionNotExistException
-     */
-    public static function initialization(): void
-    {
-
-        self::initReservedSections();
-        self::initRoutes();
-
-    }
-
-    /**
-     * @param SectionInterface $section
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Adding reserved sections
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
-     * @return string
-     */
-    public static function generateRouteName(SectionInterface $section): string
-    {
-
-        $reflector = new ReflectionClass($section);
-
-        return sprintf('__profiler-%s', $reflector->getShortName());
-
-    }
-
-    /**
      * @return void
-     * @throws Exceptions\SectionExistException
-     * @throws Exceptions\SectionNotExistException
      */
-    private static function initReservedSections(): void
+    private static function addingReservedSections(): void
     {
 
-        $performanceSection = new PerformanceSection();
+        $resource = new Resource();
 
-        ProfilerSection::addSection(new HomeSection());
-        ProfilerSection::addSection($performanceSection);
-        ProfilerSection::addSection(new LoggingSection());
-        ProfilerSection::addSection(new EventSection());
+        self::$hiddenSections[] = new PerformanceReportResultSection($resource);
 
-        ProfilerSection::addSubSection($performanceSection->getSectionName(), new ListPerformanceReports());
-        ProfilerSection::addSubSection($performanceSection->getSectionName(), new ComparePerformanceReports());
+        self::$sections[] = new HomeSection($resource);
+        self::$sections[] = new PerformanceSection($resource);
+        self::$sections[] = new LoggingSection($resource);
+        self::$sections[] = new EventsSection($resource);
 
     }
 
     /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Initializing all section routes
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
      * @return void
      */
     private static function initRoutes(): void
     {
 
-        if (isDev() || self::$utils->getEnabledInProd()) {
-            Router::subdomainGroup(self::$utils->getSubdomain(), function () {
-                foreach (ProfilerSection::getSections() as $sectionData) {
-                    self::routeCreation($sectionData);
+        Router::subdomainGroup(self::$utils->profilerSubdomain(), function () {
+            foreach (self::$hiddenSections as $hiddenSection) {
+                self::routeCreation($hiddenSection);
+            }
+
+            foreach (self::$sections as $section) {
+                self::routeCreation($section);
+
+                if ([[] !== $section->getSubsections()]) {
+                    foreach ($section->getSubsections() as $subsection) {
+                        self::routeCreation($subsection);
+                    }
                 }
-            });
+            }
 
-            self::routeCreation(['section' => new PerformanceReportsResult()]);
+            Router::get('profiling/remove-statistic', HomeController::class . '#' . 'removeStatistics')->name('__cdm-profiler-remove-statistic');
+        });
 
-            Router::get('/remove-profiled-pages', 'Codememory\Components\Profiling\Controllers\HomeController#removeAll')->name('__profiler-remove-all-statistics');
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Creating a route from a section
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @param SectionInterface $section
+     */
+    private static function routeCreation(SectionInterface $section): void
+    {
+
+        $action = sprintf('%s#%s', $section->getController(), $section->getControllerMethod());
+        $name = sprintf('%s%s', self::ROUTE_NAME_PREFIX, $section::class);
+
+        Router::get($section->getRoutePath(), $action)->name($name);
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Profiler initialization by configuration
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return void
+     */
+    private static function initByConfiguration(): void
+    {
+
+        if ((self::$utils->isDev() && self::$utils->enabledProfiler())
+            || self::$utils->enabledProfilerInProduction()) {
+            self::addingReservedSections();
+            self::initRoutes();
         }
 
     }
 
     /**
-     * @param array $sectionData
-     *
-     * @return void
+     * @return float|null
      */
-    private static function routeCreation(array $sectionData): void
+    public static function getUnixTime(): ?float
     {
 
-        $allSections = array_merge([$sectionData['section']], $sectionData['subsections'] ?? []);
+        return self::$unixTime;
 
-        /** @var SectionInterface $section */
-        foreach ($allSections as $section) {
-            $action = sprintf('%s#%s', $section->getController(), $section->getControllerMethod());
+    }
 
-            Router::get($section->generateRoutePath(), $action)->name(self::generateRouteName($section));
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns url of activated statistics
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return string|null
+     */
+    public static function getActivatedStatistic(): ?string
+    {
+
+        return urldecode(self::$request->cookie->get(self::STATISTIC_COOKIE_KEY) ?: '');
+
+    }
+
+    /**
+     * @param string $namespace
+     *
+     * @return SectionInterface|null
+     */
+    public static function getSection(string $namespace): ?SectionInterface
+    {
+
+        foreach (self::$sections as $section) {
+            if ($section instanceof $namespace) {
+                return $section;
+            }
         }
+
+        return null;
 
     }
 

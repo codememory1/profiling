@@ -13,17 +13,17 @@ class DateFormatter
 {
 
     /**
-     * @param int $current
-     * @param int $with
+     * @param string $date
+     * @param int    $now
      *
      * @return string
      */
-    public static function formatter(int $current, int $with): string
+    public static function format(string $date, int $now): string
     {
 
-        $compare = $current - $with;
+        $compare = $now - strtotime($date);
 
-        if($compare < 60) {
+        if ($compare < 60) {
             return sprintf('%s second', $compare);
         } else if (60 > $minute = ($compare / 60)) {
             return sprintf('%s minute', round($minute));
@@ -31,7 +31,7 @@ class DateFormatter
             return sprintf('%s hour', round($hour));
         }
 
-        return sprintf('%s day', number_format($compare / 86400, 1));
+        return sprintf('%s day', round($compare / 86400));
 
     }
 
