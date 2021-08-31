@@ -62,7 +62,7 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
     {
 
         $this->isValidatedRoute(function () use ($builder) {
-            $this->createReport($builder);
+            $this->handleCreateReport($builder);
         });
 
     }
