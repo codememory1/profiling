@@ -58,6 +58,11 @@ final class PerformanceReportCreator extends AbstractReportCreator
 
     }
 
+    /**
+     * @param object $builder
+     *
+     * @return void
+     */
     protected function createReport(object $builder): void
     {
 
