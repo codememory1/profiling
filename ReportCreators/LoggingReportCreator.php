@@ -65,7 +65,7 @@ final class LoggingReportCreator extends AbstractReportCreator
     {
 
         $this->profilerCache->change(function (mixed &$data) use ($builder) {
-            $data[Profiler::getActivatedStatistic()][$this->section::class][] = [
+            $data[$this->getRoutePath()][$this->section::class][] = [
                 'demanded-class'  => $builder->getDemandedClass(),
                 'demanded-method' => $builder->getDemandedMethod(),
                 'level'           => $builder->getLevel(),

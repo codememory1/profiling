@@ -5,7 +5,6 @@ namespace Codememory\Components\Profiling\Controllers;
 use Codememory\Components\DateTime\Exceptions\InvalidTimezoneException;
 use Codememory\Components\DateTime\Time;
 use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
-use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\ProfilerCache;
 use Codememory\Components\Profiling\Sections\HomeSection;
 use Codememory\HttpFoundation\Request\Request;
@@ -39,7 +38,9 @@ class HomeController extends AbstractProfilerController
         $profiledPages = [];
 
         foreach ($profilerCache->get() as $dataSections) {
-            $profiledPages[] = $dataSections[HomeSection::class];
+            if (array_key_exists(HomeSection::class, $dataSections)) {
+                $profiledPages[] = $dataSections[HomeSection::class];
+            }
         }
 
         $this->templateRender(HomeSection::class, [

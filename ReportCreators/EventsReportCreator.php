@@ -39,7 +39,7 @@ final class EventsReportCreator extends AbstractReportCreator
 
         /** @var EventsBuilder $builder */
         $this->profilerCache->change(function (mixed &$data) use ($builder) {
-            $data[Profiler::getActivatedStatistic()][$this->section::class][] = [
+            $data[$this->getRoutePath()][$this->section::class][] = [
                 'event'           => $builder->getEvent(),
                 'listeners'       => $builder->getListeners(),
                 'demanded-class'  => $builder->getDemandedClass(),

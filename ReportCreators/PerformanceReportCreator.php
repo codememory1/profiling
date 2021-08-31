@@ -63,7 +63,7 @@ final class PerformanceReportCreator extends AbstractReportCreator
 
         /** @var PerformanceReportBuilder $builder */
         $this->profilerCache->change(function (mixed &$data) use ($builder) {
-            $data[Profiler::getActivatedStatistic()][$this->section::class][] = [
+            $data[$this->getRoutePath()][$this->section::class][] = [
                 'hash'      => bin2hex(random_bytes(10)),
                 'report'    => $builder->getReport(),
                 'lead-time' => (Profiler::getUnixTime() - microtime(true)) / 1000,
