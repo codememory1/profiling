@@ -66,11 +66,11 @@ final class PerformanceReportCreator extends AbstractReportCreator
             $data[$this->getRoutePath()][$this->section::class][] = [
                 'hash'      => bin2hex(random_bytes(10)),
                 'report'    => $builder->getReport(),
-                'lead-time' => round((Profiler::getUnixTime() - Profiler::getUnixTime()) * 1000),
+                'lead-time' => round((microtime(true) - Profiler::getUnixTime()) * 1000),
                 'created'   => (new DateTime())->format('Y-m-d H:i:s')
             ];
         });
-
+        
     }
 
 
