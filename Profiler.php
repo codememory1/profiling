@@ -3,6 +3,7 @@
 namespace Codememory\Components\Profiling;
 
 use Codememory\Components\Profiling\Controllers\HomeController;
+use Codememory\Components\Profiling\ErrorHandler\ErrorHandler;
 use Codememory\Components\Profiling\Interfaces\ProfilerInterface;
 use Codememory\Components\Profiling\Interfaces\SectionInterface;
 use Codememory\Components\Profiling\Sections\EventsSection;
@@ -12,7 +13,6 @@ use Codememory\Components\Profiling\Sections\PerformanceSection;
 use Codememory\Components\Profiling\Sections\Subsections\PerformanceReportResultSection;
 use Codememory\HttpFoundation\Request\Request;
 use Codememory\Routing\Router;
-use Codememory\Components\Profiling\ErrorHandler\ErrorHandler;
 
 /**
  * Class Profiler
@@ -81,7 +81,10 @@ class Profiler implements ProfilerInterface
         self::$utils = new Utils();
         self::$request = new Request();
 
-        self::initByConfiguration();
+        self::initByConfiguration(function () {
+            self::addingReservedSections();
+            self::initRoutes();
+        });
 
     }
 
@@ -96,6 +99,36 @@ class Profiler implements ProfilerInterface
     {
 
         return self::$sections;
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Run xhprof(profiling) code based on profiler configuration
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return void
+     */
+    public static function xhprofStart(): void
+    {
+
+        self::initByConfiguration(function () {
+            xhprof_enable(XHPROF_FLAGS_MEMORY | XHPROF_FLAGS_MEMORY | XHPROF_FLAGS_CPU);
+        });
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns the result of profiling code using xhprof
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return array
+     */
+    public static function getXhprofData(): array
+    {
+
+        return xhprof_disable() ?: [];
 
     }
 
@@ -168,24 +201,6 @@ class Profiler implements ProfilerInterface
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Profiler initialization by configuration
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
-     *
-     * @return void
-     */
-    private static function initByConfiguration(): void
-    {
-
-        if ((self::$utils->isDev() && self::$utils->enabledProfiler())
-            || self::$utils->enabledProfilerInProduction()) {
-            self::addingReservedSections();
-            self::initRoutes();
-        }
-
-    }
-
-    /**
      * @return float|null
      */
     public static function getUnixTime(): ?float
@@ -210,6 +225,10 @@ class Profiler implements ProfilerInterface
     }
 
     /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns the section object by namespace if the section was registered
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
      * @param string $namespace
      *
      * @return SectionInterface|null
@@ -224,6 +243,25 @@ class Profiler implements ProfilerInterface
         }
 
         return null;
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Profiler initialization by configuration
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @param callable $callback
+     *
+     * @return void
+     */
+    private static function initByConfiguration(callable $callback): void
+    {
+
+        if ((self::$utils->isDev() && self::$utils->enabledProfiler())
+            || self::$utils->enabledProfilerInProduction()) {
+            call_user_func($callback);
+        }
 
     }
 
