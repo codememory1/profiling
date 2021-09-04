@@ -2,10 +2,11 @@
 
 namespace Codememory\Components\Profiling\ReportCreators;
 
+use Codememory\Components\DateTime\DateTime;
+use Codememory\Components\DateTime\Exceptions\InvalidTimezoneException;
 use Codememory\Components\Profiling\Exceptions\BuilderNotCurrentSectionException;
 use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\Sections\Builders\EventsBuilder;
-use Codememory\Components\Profiling\Sections\Builders\PerformanceReportBuilder;
 use Codememory\Support\Arr;
 
 /**
@@ -25,7 +26,7 @@ final class EventsReportCreator extends AbstractReportCreator
     public function create(object $builder): void
     {
 
-        $this->instanceofBuilder($builder, PerformanceReportBuilder::class);
+        $this->instanceofBuilder($builder, EventsBuilder::class);
 
         parent::create($builder);
 
@@ -53,6 +54,7 @@ final class EventsReportCreator extends AbstractReportCreator
 
     /**
      * @inheritDoc
+     * @throws InvalidTimezoneException
      */
     public function get(?string $url = null): array
     {
@@ -68,7 +70,7 @@ final class EventsReportCreator extends AbstractReportCreator
                     ->setEvent($data['event'])
                     ->setListeners($data['listeners'])
                     ->setDemanded($data['demanded-class'], $data['demanded-method'])
-                    ->setCompleted($data['competed'])
+                    ->setCompleted($this->dateTime->format('Y-m-d H:i:s'))
                     ->setLeadTime($data['lead-time']);
             }
 

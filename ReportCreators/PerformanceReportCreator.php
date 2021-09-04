@@ -2,7 +2,6 @@
 
 namespace Codememory\Components\Profiling\ReportCreators;
 
-use Codememory\Components\DateTime\DateTime;
 use Codememory\Components\Profiling\Exceptions\BuilderNotCurrentSectionException;
 use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\Sections\Builders\PerformanceReportBuilder;
@@ -72,10 +71,10 @@ final class PerformanceReportCreator extends AbstractReportCreator
                 'hash'      => bin2hex(random_bytes(10)),
                 'report'    => $builder->getReport(),
                 'lead-time' => round((microtime(true) - Profiler::getUnixTime()) * 1000),
-                'created'   => (new DateTime())->format('Y-m-d H:i:s')
+                'created'   => $this->dateTime->format('Y-m-d H:i:s')
             ];
         });
-        
+
     }
 
 

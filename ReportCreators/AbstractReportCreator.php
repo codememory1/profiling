@@ -2,6 +2,7 @@
 
 namespace Codememory\Components\Profiling\ReportCreators;
 
+use Codememory\Components\DateTime\DateTime;
 use Codememory\Components\Profiling\Exceptions\BuilderNotCurrentSectionException;
 use Codememory\Components\Profiling\Interfaces\BuilderInterface;
 use Codememory\Components\Profiling\Interfaces\ReportCreatorInterface;
@@ -44,6 +45,11 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
     protected ProfilerCache $profilerCache;
 
     /**
+     * @var DateTime
+     */
+    protected DateTime $dateTime;
+
+    /**
      * @param Route|null       $route
      * @param SectionInterface $section
      */
@@ -54,6 +60,7 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
         $this->section = $section;
         $this->utils = new Utils();
         $this->profilerCache = new ProfilerCache();
+        $this->dateTime = new DateTime();
 
     }
 

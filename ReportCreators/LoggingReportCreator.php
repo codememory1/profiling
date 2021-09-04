@@ -2,6 +2,7 @@
 
 namespace Codememory\Components\Profiling\ReportCreators;
 
+use Codememory\Components\DateTime\DateTime;
 use Codememory\Components\Profiling\Exceptions\BuilderNotCurrentSectionException;
 use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
@@ -71,7 +72,7 @@ final class LoggingReportCreator extends AbstractReportCreator
                 'level'           => $builder->getLevel(),
                 'message'         => $builder->getMessage(),
                 'context'         => $builder->getContext(),
-                'created'         => $builder->getCreated(),
+                'created'         => $this->dateTime->format('Y-m-d H:i:s'),
             ];
         });
 

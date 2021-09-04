@@ -70,7 +70,7 @@ final class HomeReportCreator extends AbstractReportCreator
                     'http-method'       => $builder->getHttpMethod(),
                     'controller'        => $builder->getController(),
                     'controller-method' => $builder->getControllerMethod(),
-                    'created'           => $builder->getCreatedDate()
+                    'created'           => $this->dateTime->format('Y-m-d H:i:s')
                 ];
             }
         });
