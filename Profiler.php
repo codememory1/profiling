@@ -81,7 +81,7 @@ class Profiler implements ProfilerInterface
         self::$utils = new Utils();
         self::$request = new Request();
 
-        self::initByConfiguration(function () {
+        self::executeWhenProfilerIsEnabled(function () {
             self::addingReservedSections();
             self::initRoutes();
         });
@@ -112,7 +112,7 @@ class Profiler implements ProfilerInterface
     public static function xhprofStart(): void
     {
 
-        self::initByConfiguration(function () {
+        self::executeWhenProfilerIsEnabled(function () {
             xhprof_enable(XHPROF_FLAGS_MEMORY | XHPROF_FLAGS_MEMORY | XHPROF_FLAGS_CPU);
         });
 
@@ -128,7 +128,9 @@ class Profiler implements ProfilerInterface
     public static function getXhprofData(): array
     {
 
-        return xhprof_disable() ?: [];
+        return self::executeWhenProfilerIsEnabled(function () {
+            return xhprof_disable() ?: [];
+        }) ?: [];
 
     }
 
@@ -247,21 +249,23 @@ class Profiler implements ProfilerInterface
     }
 
     /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Profiler initialization by configuration
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Callback if profiler is enabled
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
      *
      * @param callable $callback
      *
      * @return void
      */
-    private static function initByConfiguration(callable $callback): void
+    public static function executeWhenProfilerIsEnabled(callable $callback): mixed
     {
 
         if ((self::$utils->isDev() && self::$utils->enabledProfiler())
             || self::$utils->enabledProfilerInProduction()) {
-            call_user_func($callback);
+            return call_user_func($callback);
         }
+
+        return null;
 
     }
 

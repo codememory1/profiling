@@ -6,6 +6,7 @@ use Codememory\Components\Profiling\Exceptions\BuilderNotCurrentSectionException
 use Codememory\Components\Profiling\Interfaces\BuilderInterface;
 use Codememory\Components\Profiling\Interfaces\ReportCreatorInterface;
 use Codememory\Components\Profiling\Interfaces\SectionInterface;
+use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\ProfilerCache;
 use Codememory\Components\Profiling\Utils;
 use Codememory\Routing\Route;
@@ -61,7 +62,7 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
     public function create(object $builder): void
     {
 
-        $this->executeWhenProfilerIsEnabled(function () use ($builder) {
+        Profiler::executeWhenProfilerIsEnabled(function () use ($builder) {
             $this->isValidatedRoute(function () use ($builder) {
                 $this->handleCreateReport($builder);
             });
@@ -164,23 +165,6 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
                     $this->createReport($builder);
                 }
             }
-        }
-
-    }
-
-    /**
-     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
-     * Callback if profiler is enabled
-     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
-     *
-     * @param callable $callback
-     */
-    protected function executeWhenProfilerIsEnabled(callable $callback): void
-    {
-
-        if (($this->utils->isDev() && $this->utils->enabledProfiler())
-            || $this->utils->enabledProfilerInProduction()) {
-            call_user_func($callback);
         }
 
     }
