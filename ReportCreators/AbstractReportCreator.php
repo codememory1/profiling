@@ -10,6 +10,7 @@ use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\ProfilerCache;
 use Codememory\Components\Profiling\Utils;
 use Codememory\Routing\Route;
+use Codememory\Routing\Router;
 use ReflectionClass;
 
 /**
@@ -49,7 +50,7 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
     public function __construct(?Route $route, SectionInterface $section)
     {
 
-        $this->route = $route;
+        $this->route = $route ?: Router::getCurrentRoute();
         $this->section = $section;
         $this->utils = new Utils();
         $this->profilerCache = new ProfilerCache();
