@@ -61,10 +61,11 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
     public function create(object $builder): void
     {
 
-        $this->isValidatedRoute(function () use ($builder) {
-            $this->handleCreateReport($builder);
+        $this->executeWhenProfilerIsEnabled(function () use ($builder) {
+            $this->isValidatedRoute(function () use ($builder) {
+                $this->handleCreateReport($builder);
+            });
         });
-
     }
 
     /**
@@ -163,6 +164,23 @@ abstract class AbstractReportCreator implements ReportCreatorInterface
                     $this->createReport($builder);
                 }
             }
+        }
+
+    }
+
+    /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Callback if profiler is enabled
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @param callable $callback
+     */
+    protected function executeWhenProfilerIsEnabled(callable $callback): void
+    {
+
+        if (($this->utils->isDev() && $this->utils->enabledProfiler())
+            || $this->utils->enabledProfilerInProduction()) {
+            call_user_func($callback);
         }
 
     }
