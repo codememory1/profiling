@@ -17,7 +17,6 @@
         "codememory/date-time": "^1.0",
         "codememory/fs": "^1.1",
         "codememory/global-config": "^1.1",
-        "codememory/logging": "^1.0",
         "codememory/markup": "^2.0",
         "codememory/routing": "^1.2",
         "codememory/support": "^1.2",

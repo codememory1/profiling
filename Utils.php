@@ -17,6 +17,9 @@ use JetBrains\PhpStorm\ArrayShape;
 class Utils
 {
 
+    private const DEFAULT_PATH_LOGS = 'storage/';
+    private const DEFAULT_LOG_FILENAME = '_error-handler.log';
+
     /**
      * @var ConfigInterface
      */
@@ -141,6 +144,26 @@ class Utils
     {
 
         return $this->config->get('toolbar.enableByIp');
+
+    }
+
+    /**
+     * @return array
+     */
+    #[ArrayShape([
+        'pathLogs'    => "mixed",
+        'logFilename' => "mixed"
+    ])]
+    public function getErrorHandler(): array
+    {
+
+        $path = trim($this->config->get('errorHandler.pathLogs') ?: self::DEFAULT_PATH_LOGS, '/') . '/';
+        $filename = trim($this->config->get('errorHandler.logFilename') ?: self::DEFAULT_LOG_FILENAME, '/');
+
+        return [
+            'pathLogs'    => $path,
+            'logFilename' => $filename
+        ];
 
     }
 

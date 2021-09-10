@@ -86,12 +86,13 @@ class ErrorHandler
 
         $this->whoopsRun->pushHandler(function (ErrorException $exception) {
             $filesystem = new File();
+            $configErrorHandler = $this->utils->getErrorHandler();
 
-            file_put_contents($filesystem->getRealPath('storage/server.log'), json_encode([
+            file_put_contents($filesystem->getRealPath($configErrorHandler['pathLogs'].$configErrorHandler['logFilename']), json_encode([
                 'message' => $exception->getMessage(),
                 'file'    => $exception->getFile(),
                 'line'    => $exception->getLine(),
-            ]));
+            ]), FILE_APPEND);
         })->register();
 
     }
