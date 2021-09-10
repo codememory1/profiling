@@ -45,7 +45,6 @@ final class LoggingReportCreator extends AbstractReportCreator
 
             foreach ($logging as &$data) {
                 $data = (new LoggingBuilder())
-                    ->setDemanded($data['demanded-class'], $data['demanded-method'])
                     ->setLevel($data['level'])
                     ->setMessage($data['message'])
                     ->setContext($data['context'])
@@ -67,8 +66,6 @@ final class LoggingReportCreator extends AbstractReportCreator
 
         $this->profilerCache->change(function (mixed &$data) use ($builder) {
             $data[$this->getRoutePath()][$this->section::class][] = [
-                'demanded-class'  => $builder->getDemandedClass(),
-                'demanded-method' => $builder->getDemandedMethod(),
                 'level'           => $builder->getLevel(),
                 'message'         => $builder->getMessage(),
                 'context'         => $builder->getContext(),

@@ -18,16 +18,6 @@ final class LoggingBuilder implements BuilderInterface
     /**
      * @var string|null
      */
-    private ?string $demandedClass = null;
-
-    /**
-     * @var string|null
-     */
-    private ?string $demandedMethod = null;
-
-    /**
-     * @var string|null
-     */
     private ?string $level = null;
 
     /**
@@ -44,42 +34,6 @@ final class LoggingBuilder implements BuilderInterface
      * @var string|null
      */
     public ?string $created = null;
-
-    /**
-     * @param string $class
-     * @param string $method
-     *
-     * @return $this
-     */
-    public function setDemanded(string $class, string $method): LoggingBuilder
-    {
-
-        $this->demandedClass = $class;
-        $this->demandedMethod = $method;
-
-        return $this;
-
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getDemandedClass(): ?string
-    {
-
-        return $this->demandedClass;
-
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getDemandedMethod(): ?string
-    {
-
-        return $this->demandedMethod;
-
-    }
 
     /**
      * @param string $level

@@ -1,8 +1,3 @@
-<?php
-
-use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
-?>
-
 <div class="content__header">
     <h4 class="title">List of logs</h4>
 </div>
@@ -36,7 +31,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
             <table>
                 <thead>
                 <tr>
-                    <th>Demanded</th>
                     <th>Level</th>
                     <th>Message</th>
                     <th>Context</th>
@@ -46,10 +40,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
                 <tbody>
                 <?php foreach ($this->getParameter('logs') as $log): ?>
                     <tr>
-                        <td>
-                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
-                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
-                        </td>
                         <td>
                             <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>"><?php echo $log->getLevel(); ?></span>
                         </td>
@@ -71,7 +61,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
             <table>
                 <thead>
                 <tr>
-                    <th>Demanded</th>
                     <th>Level</th>
                     <th>Message</th>
                     <th>Context</th>
@@ -82,10 +71,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
                 <?php foreach ($this->getParameter('sort-logs')('error') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
-                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
-                        </td>
-                        <td>
                             <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
                                 <?php echo $log->getLevel(); ?>
                             </span>
@@ -108,7 +93,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
             <table>
                 <thead>
                 <tr>
-                    <th>Demanded</th>
                     <th>Level</th>
                     <th>Message</th>
                     <th>Context</th>
@@ -119,10 +103,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
                 <?php foreach ($this->getParameter('sort-logs')('debug') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
-                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
-                        </td>
-                        <td>
                             <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
                                 <?php echo $log->getLevel(); ?>
                             </span>
@@ -145,7 +125,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
             <table>
                 <thead>
                 <tr>
-                    <th>Demanded</th>
                     <th>Level</th>
                     <th>Message</th>
                     <th>Context</th>
@@ -156,10 +135,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
                 <?php foreach ($this->getParameter('sort-logs')('warning') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
-                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
-                        </td>
-                        <td>
                             <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
                                 <?php echo $log->getLevel(); ?>
                             </span>
@@ -182,7 +157,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
             <table>
                 <thead>
                 <tr>
-                    <th>Demanded</th>
                     <th>Level</th>
                     <th>Message</th>
                     <th>Context</th>
@@ -193,10 +167,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
                 <?php foreach ($this->getParameter('sort-logs')('notice') as $log): ?>
                     <tr>
                         <td>
-                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
-                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
-                        </td>
-                        <td>
                             <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
                                 <?php echo $log->getLevel(); ?>
                             </span>
@@ -219,7 +189,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
             <table>
                 <thead>
                 <tr>
-                    <th>Demanded</th>
                     <th>Level</th>
                     <th>Message</th>
                     <th>Context</th>
@@ -229,10 +198,6 @@ use Codememory\Components\Profiling\Sections\Builders\LoggingBuilder;
                 <tbody>
                 <?php foreach ($this->getParameter('sort-logs')('alert') as $log): ?>
                     <tr>
-                        <td>
-                            <span class="mark blue"><?php echo $log->getDemandedClass(); ?></span>
-                            <span class="mark red"><?php echo $log->getDemandedMethod(); ?></span>
-                        </td>
                         <td>
                             <span class="mark <?php echo $this->getParameter('level-class')($log->getLevel()); ?>">
                                 <?php echo $log->getLevel(); ?>
