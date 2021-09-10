@@ -33,6 +33,11 @@ class Profiler implements ProfilerInterface
     private static array $sections = [];
 
     /**
+     * @var bool
+     */
+    private static bool $isInit = false;
+    
+    /**
      * @var array
      */
     private static array $hiddenSections = [];
@@ -75,6 +80,8 @@ class Profiler implements ProfilerInterface
     public static function init(): void
     {
 
+        self::$isInit = true;
+        
         (new ErrorHandler())->modeHandler();
 
         self::$unixTime = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
@@ -135,6 +142,20 @@ class Profiler implements ProfilerInterface
     }
 
     /**
+     * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
+     * Returns a boolean value indicating the initialization of the profiler
+     * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
+     *
+     * @return bool
+     */
+    public static function isInit(): bool
+    {
+
+        return self::$isInit;
+
+    }
+
+    /**
      * =>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>
      * Adding reserved sections
      * <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=
@@ -180,7 +201,7 @@ class Profiler implements ProfilerInterface
                 }
             }
 
-            Router::get('profiling/remove-statistic', HomeController::class . '#' . 'removeStatistics')->name('__cdm-profiler-remove-statistic');
+            Router::get('/remove-statistic', HomeController::class . '#' . 'removeStatistics')->name('__cdm-profiler-remove-statistic');
         });
 
     }
