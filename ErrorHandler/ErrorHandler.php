@@ -88,6 +88,10 @@ class ErrorHandler
             $filesystem = new File();
             $configErrorHandler = $this->utils->getErrorHandler();
 
+            if(!$filesystem->exist($configErrorHandler['pathLogs'])) {
+                $filesystem->mkdir($configErrorHandler['pathLogs'], 0777, true);
+            }
+
             file_put_contents($filesystem->getRealPath($configErrorHandler['pathLogs'].$configErrorHandler['logFilename']), json_encode([
                 'message' => $exception->getMessage(),
                 'file'    => $exception->getFile(),
