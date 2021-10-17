@@ -6,6 +6,7 @@ use Codememory\Components\Profiling\Controllers\HomeController;
 use Codememory\Components\Profiling\ErrorHandler\ErrorHandler;
 use Codememory\Components\Profiling\Interfaces\ProfilerInterface;
 use Codememory\Components\Profiling\Interfaces\SectionInterface;
+use Codememory\Components\Profiling\Sections\DatabaseSection;
 use Codememory\Components\Profiling\Sections\EventsSection;
 use Codememory\Components\Profiling\Sections\HomeSection;
 use Codememory\Components\Profiling\Sections\LoggingSection;
@@ -173,6 +174,7 @@ class Profiler implements ProfilerInterface
         self::$sections[] = new PerformanceSection($resource);
         self::$sections[] = new LoggingSection($resource);
         self::$sections[] = new EventsSection($resource);
+        self::$sections[] = new DatabaseSection($resource);
 
     }
 

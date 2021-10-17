@@ -2,6 +2,7 @@
 
 namespace Codememory\Components\Profiling\Controllers;
 
+use Codememory\Components\DateTime\Exceptions\InvalidTimezoneException;
 use Codememory\Components\Profiling\Exceptions\SectionNotImplementInterfaceException;
 use Codememory\Components\Profiling\ReportCreators\EventsReportCreator;
 use Codememory\Components\Profiling\Resource;
@@ -22,8 +23,9 @@ class EventsController extends AbstractProfilerController
 
     /**
      * @return void
-     * @throws SectionNotImplementInterfaceException
      * @throws ReflectionException
+     * @throws SectionNotImplementInterfaceException
+     * @throws InvalidTimezoneException
      */
     public function index(): void
     {
