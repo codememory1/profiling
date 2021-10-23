@@ -6,6 +6,7 @@ use Codememory\Components\Profiling\Resource;
 use Codememory\Components\Profiling\Utils;
 use Codememory\FileSystem\File;
 use ErrorException;
+use Exception;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
 use Whoops\RunInterface;
@@ -84,15 +85,15 @@ class ErrorHandler
         ini_set('ignore_repeated_errors', true);
         ini_set('html_errors', false);
 
-        $this->whoopsRun->pushHandler(function (ErrorException $exception) {
+        $this->whoopsRun->pushHandler(function (Exception $exception) {
             $filesystem = new File();
             $configErrorHandler = $this->utils->getErrorHandler();
 
-            if(!$filesystem->exist($configErrorHandler['pathLogs'])) {
+            if (!$filesystem->exist($configErrorHandler['pathLogs'])) {
                 $filesystem->mkdir($configErrorHandler['pathLogs'], 0777, true);
             }
 
-            file_put_contents($filesystem->getRealPath($configErrorHandler['pathLogs'].$configErrorHandler['logFilename']), json_encode([
+            file_put_contents($filesystem->getRealPath($configErrorHandler['pathLogs'] . $configErrorHandler['logFilename']), json_encode([
                 'message' => $exception->getMessage(),
                 'file'    => $exception->getFile(),
                 'line'    => $exception->getLine(),
