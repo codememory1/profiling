@@ -203,7 +203,7 @@ class Profiler implements ProfilerInterface
                 }
             }
 
-            Router::get('/remove-statistic', HomeController::class . '#' . 'removeStatistics')->name('__cdm-profiler-remove-statistic');
+            Router::get('/remove-statistic', [HomeController::class, 'removeStatistics'])->name('__cdm-profiler-remove-statistic');
         });
 
     }
@@ -217,11 +217,10 @@ class Profiler implements ProfilerInterface
      */
     private static function routeCreation(SectionInterface $section): void
     {
-
-        $action = sprintf('%s#%s', $section->getController(), $section->getControllerMethod());
+        
         $name = sprintf('%s%s', self::ROUTE_NAME_PREFIX, $section::class);
 
-        Router::get($section->getRoutePath(), $action)->name($name);
+        Router::get($section->getRoutePath(), [$section->getController(), $section->getControllerMethod()])->name($name);
 
     }
 

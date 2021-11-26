@@ -5,7 +5,6 @@ namespace Codememory\Components\Profiling\ErrorHandler;
 use Codememory\Components\Profiling\Resource;
 use Codememory\Components\Profiling\Utils;
 use Codememory\FileSystem\File;
-use ErrorException;
 use Exception;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
