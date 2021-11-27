@@ -3,6 +3,7 @@
 namespace Codememory\Components\Profiling\ReportCreators;
 
 use Codememory\Components\Profiling\Exceptions\BuilderNotCurrentSectionException;
+use Codememory\Components\Profiling\Profiler;
 use Codememory\Components\Profiling\Sections\Builders\DatabaseBuilder;
 use Codememory\Support\Arr;
 
@@ -54,7 +55,7 @@ class DatabaseReportCreator extends AbstractReportCreator
     public function get(?string $url = null): array
     {
 
-        $url = $url ?: $this->getRoutePath();
+        $url = $url ?: Profiler::getActivatedStatistic();
         $cache = $this->profilerCache->get();
 
         if ($this->isValidatedRoute()) {
